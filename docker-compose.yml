@@ -1,0 +1,12 @@
+services:
+  racoony-security:
+    container_name: racoony-security
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/racoony
+    working_dir: /racoony
+    command: /bin/sh
+    stdin_open: true
+    tty: true
