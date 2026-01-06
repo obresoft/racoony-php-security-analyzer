@@ -6,8 +6,27 @@ namespace Obresoft\Racoony\Enum;
 
 enum Severity: string
 {
+    case INFO = 'INFO';
     case HIGH = 'HIGH';
     case CRITICAL = 'CRITICAL';
     case LOW = 'LOW';
     case MEDIUM = 'MEDIUM';
+
+    public function rank(): int
+    {
+        return match ($this) {
+            self::INFO => 0,
+            self::LOW => 1,
+            self::MEDIUM => 2,
+            self::HIGH => 3,
+            self::CRITICAL => 4,
+        };
+    }
+
+    public function isAtLeast(mixed $threshold): bool
+    {
+        $threshold = Severity::tryFrom($threshold) ?? Severity::LOW;
+
+        return $this->rank() >= $threshold->rank();
+    }
 }

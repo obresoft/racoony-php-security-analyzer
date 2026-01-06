@@ -18,9 +18,9 @@ final class LaravelRawSqlInjectionRule extends AbstractSqlInjectionRule
         return [
             // 'where', need to fix for closure test
             'orwhere',
-            //'update',
+            // 'update',
             'insertusing',
-            //'select',
+            // 'select',
             'selectraw',
             'statement',
             'raw',

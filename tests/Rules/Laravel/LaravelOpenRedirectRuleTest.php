@@ -33,7 +33,7 @@ final class LaravelOpenRedirectRuleTest extends AbstractTestCase
     }
 
     /**
-     * @return iterable<string|int, array{0: string, 1?: list<Insight>}>
+     * @return iterable<int|string, array{0: string, 1?: list<Insight>}>
      */
     public static function provideCases(): iterable
     {
