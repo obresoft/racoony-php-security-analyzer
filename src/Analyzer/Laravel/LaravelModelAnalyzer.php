@@ -68,6 +68,78 @@ final class LaravelModelAnalyzer extends BaseAnalyzer implements AnalyzerInterfa
         return in_array($resolvedParent, self::LARAVEL_MODEL_CLASS, true);
     }
 
+    public function hasFillable(): bool
+    {
+        $node = $this->scope->node();
+        if (!$node instanceof Class_) {
+            return false;
+        }
+
+        foreach ($node->stmts as $stmt) {
+            if ($stmt instanceof Property) {
+                foreach ($stmt->props as $prop) {
+                    if ($prop->name->toString() === 'fillable') {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public function hasGuarded(): bool
+    {
+        $node = $this->scope->node();
+        if (!$node instanceof Class_) {
+            return false;
+        }
+
+        foreach ($node->stmts as $stmt) {
+            if ($stmt instanceof Property) {
+                foreach ($stmt->props as $prop) {
+                    if ($prop->name->toString() === 'guarded') {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public function guardedIsEmptyArray(): bool
+    {
+        $array = $this->guardedArrayItems();
+
+        return $array instanceof Array_ && count($array->items) === 0;
+    }
+
+    public function guardedArrayItems(): ?Array_
+    {
+        $node = $this->scope->node();
+        if (!$node instanceof Class_) {
+            return null;
+        }
+
+        foreach ($node->stmts as $stmt) {
+            if ($stmt instanceof Property) {
+                foreach ($stmt->props as $prop) {
+                    if ($prop->name->toString() !== 'guarded') {
+                        continue;
+                    }
+                    $default = $prop->default;
+                    if ($default instanceof Array_) {
+                        return $default;
+                    }
+                    return null;
+                }
+            }
+        }
+
+        return null;
+    }
+
     public function hasFillableOrGuarded(): bool
     {
         $node = $this->scope->node();
