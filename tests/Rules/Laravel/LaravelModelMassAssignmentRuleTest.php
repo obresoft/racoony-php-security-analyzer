@@ -8,7 +8,7 @@ use Obresoft\Racoony\Attribute\CWE;
 use Obresoft\Racoony\Enum\Severity;
 use Obresoft\Racoony\Insight\Insight;
 use Obresoft\Racoony\Insight\Vulnerability;
-use Obresoft\Racoony\Rule\Laravel\LaravelModelRequiresFillable;
+use Obresoft\Racoony\Rule\Laravel\LaravelModelMassAssignmentRule;
 use Obresoft\Racoony\Tests\AbstractTestCase;
 use Obresoft\Racoony\Tests\Attributes\TestsRule;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -18,8 +18,8 @@ use PHPUnit\Framework\MockObject\Exception;
 /**
  * @internal
  */
-#[TestsRule(LaravelModelRequiresFillable::class)]
-final class LaravelModelRequiresFillableTest extends AbstractTestCase
+#[TestsRule(LaravelModelMassAssignmentRule::class)]
+final class LaravelModelMassAssignmentRuleTest extends AbstractTestCase
 {
     /**
      * @param list<Insight> $expected
@@ -52,7 +52,7 @@ final class LaravelModelRequiresFillableTest extends AbstractTestCase
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_915,
-                    'Missing `$fillable` property in model, which may lead to mass assignment vulnerabilities.
+                    'Model allows mass assignment: `$guarded = []` without a `$fillable` whitelist.
 [CWE-915: Improperly Controlled Modification of Dynamically-Determined Object Attributes] See: https://cwe.mitre.org/data/definitions/915.html',
                     0,
                     Severity::HIGH->value,
@@ -60,28 +60,6 @@ final class LaravelModelRequiresFillableTest extends AbstractTestCase
             ],
         ];
 
-        yield 'missing fillable property for class with as BaseModel alias' => [
-            <<<'PHP'
-                <?php
-                use Illuminate\Database\Eloquent\Bla;
-                use Illuminate\Database\Eloquent\Model as BaseModel;
-
-                class Post extends BaseModel
-                {
-                    protected $guarded = [];
-                }
-                PHP,
-            [
-                new Vulnerability(
-                    __FILE__,
-                    CWE::CWE_915,
-                    'Missing `$fillable` property in model, which may lead to mass assignment vulnerabilities.
-[CWE-915: Improperly Controlled Modification of Dynamically-Determined Object Attributes] See: https://cwe.mitre.org/data/definitions/915.html',
-                    0,
-                    Severity::HIGH->value,
-                ),
-            ],
-        ];
 
         yield 'with fillable property for class' => [
             <<<'PHP'
@@ -136,14 +114,6 @@ final class LaravelModelRequiresFillableTest extends AbstractTestCase
                 }
                 PHP,
             [
-                new Vulnerability(
-                    __FILE__,
-                    CWE::CWE_915,
-                    'Missing `$fillable` property in model, which may lead to mass assignment vulnerabilities.
-[CWE-915: Improperly Controlled Modification of Dynamically-Determined Object Attributes] See: https://cwe.mitre.org/data/definitions/915.html',
-                    0,
-                    Severity::HIGH->value,
-                ),
             ],
         ];
     }

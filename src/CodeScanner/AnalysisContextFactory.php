@@ -103,3 +103,4 @@ final class AnalysisContextFactory
         return $flatNodes;
     }
 }
+

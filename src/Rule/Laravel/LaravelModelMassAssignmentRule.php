@@ -20,7 +20,7 @@ use Obresoft\Racoony\Rule\Rule;
  * Also @see https://cheatsheetseries.owasp.org/cheatsheets/Laravel_Cheat_Sheet.html#mass-assignment
  */
 #[CWE('915', 'Improperly Controlled Modification of Dynamically-Determined Object Attributes', 'https://cwe.mitre.org/data/definitions/915.html')]
-final class LaravelModelRequiresFillable extends AbstractRule implements Rule
+final class LaravelModelMassAssignmentRule extends AbstractRule implements Rule
 {
     public function check(AnalysisContext $context): null|array|Insight
     {
@@ -28,16 +28,16 @@ final class LaravelModelRequiresFillable extends AbstractRule implements Rule
             return null;
         }
 
-        $laravelModelAnalyzer = $context->analyzerResolver->get(LaravelModelAnalyzer::class);
+        $model = $context->analyzerResolver->get(LaravelModelAnalyzer::class);
 
-        if (!$laravelModelAnalyzer->isLaravelModel()) {
+        if (!$model->isLaravelModel()) {
             return null;
         }
 
-        if (!$laravelModelAnalyzer->hasFillableOrGuarded()) {
+        if ($model->guardedIsEmptyArray() && !$model->hasFillable()) {
             return $this->createInsight(
                 CWE::CWE_915,
-                'Missing `$fillable` property in model, which may lead to mass assignment vulnerabilities.',
+                'Model allows mass assignment: `$guarded = []` without a `$fillable` whitelist.',
                 0,
                 Severity::HIGH->value,
             );

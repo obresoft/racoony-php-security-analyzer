@@ -12,7 +12,7 @@ use Obresoft\Racoony\Rule\Laravel\LaravelColumnNameSqlInjectionRule;
 use Obresoft\Racoony\Rule\Laravel\LaravelCrossSiteRequestForgeryCsrf;
 use Obresoft\Racoony\Rule\Laravel\LaravelInsecureCallableFromRequest;
 use Obresoft\Racoony\Rule\Laravel\LaravelMassAssignmentRule;
-use Obresoft\Racoony\Rule\Laravel\LaravelModelRequiresFillable;
+use Obresoft\Racoony\Rule\Laravel\LaravelModelMassAssignmentRule;
 use Obresoft\Racoony\Rule\Laravel\LaravelOpenRedirectRule;
 use Obresoft\Racoony\Rule\Laravel\LaravelRawSqlInjectionRule;
 use Obresoft\Racoony\Rule\Laravel\LaravelSensitiveCookieExemptions;
@@ -61,7 +61,7 @@ enum RuleSet: string
     {
         return [
             LaravelSetCookieSecurityRule::class,
-            LaravelModelRequiresFillable::class,
+            LaravelModelMassAssignmentRule::class,
             LaravelOpenRedirectRule::class,
             LaravelMassAssignmentRule::class,
             LaravelSensitiveCookieInformation::class,
