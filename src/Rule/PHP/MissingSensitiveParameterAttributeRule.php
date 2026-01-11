@@ -11,6 +11,7 @@ use Obresoft\Racoony\Insight\Insight;
 use Obresoft\Racoony\Rule\AbstractRule;
 use Obresoft\Racoony\Rule\Rule;
 
+use function in_array;
 use function sprintf;
 
 #[CWE('532', 'Insertion of Sensitive Information into Log File.', 'https://cwe.mitre.org/data/definitions/532.html')]
@@ -31,7 +32,7 @@ final class MissingSensitiveParameterAttributeRule extends AbstractRule implemen
         'credential',
         'creditcard',
         'ssn',
-        'apitoken'
+        'apitoken',
     ];
 
     public function check(AnalysisContext $context): null|array|Insight

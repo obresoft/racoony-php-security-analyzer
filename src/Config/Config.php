@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Obresoft\Racoony\Config;
 
+use Obresoft\Racoony\Enum\Severity;
 use Obresoft\Racoony\Rule\Rule;
 
 interface Config
@@ -26,4 +27,6 @@ interface Config
     public function setApplication(ApplicationData $application): self;
 
     public function getApplication(): ?ApplicationData;
+
+    public function getFailOn(): Severity;
 }

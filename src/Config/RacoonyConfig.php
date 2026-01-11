@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Obresoft\Racoony\Config;
 
+use Obresoft\Racoony\Enum\Severity;
 use Obresoft\Racoony\Rule\Rule;
 use Obresoft\Racoony\Rule\RuleSet;
 use Ramsey\Collection\Set;
@@ -20,6 +21,8 @@ final class RacoonyConfig implements Config
     private array $rules = [];
 
     private ?ApplicationData $application = null;
+
+    private Severity $failOn = Severity::LOW;
 
     /**
      * @param non-empty-string $path
@@ -116,5 +119,17 @@ final class RacoonyConfig implements Config
     public function getApplication(): ?ApplicationData
     {
         return $this->application;
+    }
+
+    public function setFailOn(Severity $failOn): self
+    {
+        $this->failOn = $failOn;
+
+        return $this;
+    }
+
+    public function getFailOn(): Severity
+    {
+        return $this->failOn;
     }
 }

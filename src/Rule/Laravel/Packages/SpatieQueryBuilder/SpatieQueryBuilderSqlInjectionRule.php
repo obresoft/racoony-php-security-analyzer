@@ -191,7 +191,7 @@ final class SpatieQueryBuilderSqlInjectionRule extends AbstractRule implements R
 
             $argumentScope = $arrayScope->callAnalyzer()->getSecondArgumentAsScope();
 
-            if ($argumentScope === null) {
+            if (null === $argumentScope) {
                 continue;
             }
 
