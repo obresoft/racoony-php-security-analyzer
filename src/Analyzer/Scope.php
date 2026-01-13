@@ -200,17 +200,14 @@ final class Scope
     public function rawInterpolatedParts(): array
     {
         if ($this->node instanceof Encapsed) {
-            /** @var list<Node> $parts */
             return $this->node->parts;
         }
 
         if ($this->node instanceof ShellExec) {
-            /** @var list<Node> $parts */
             return $this->node->parts;
         }
 
         if ($this->node instanceof Node\Scalar\InterpolatedString) {
-            /** @var list<Node> $parts */
             return $this->node->parts;
         }
 
@@ -373,6 +370,7 @@ final class Scope
         if (!$this->isVariable()) {
             return null;
         }
+
         $name = $this->node->name ?? null;
 
         return is_string($name) ? $name : null;

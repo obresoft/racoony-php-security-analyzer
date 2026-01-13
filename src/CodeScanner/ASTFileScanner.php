@@ -48,8 +48,8 @@ final class ASTFileScanner implements Scanner
         try {
             /** @var list<Stmt>|null $ast */
             $ast = $this->phpParser->parse($sourceCode);
-        } catch (PhpParserError $error) {
-            throw FileParsingException::fromPhpParserError($filePath, $error);
+        } catch (PhpParserError $phpParserError) {
+            throw FileParsingException::fromPhpParserError($filePath, $phpParserError);
         }
 
         if (null === $ast) {

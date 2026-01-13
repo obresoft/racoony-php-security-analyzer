@@ -45,7 +45,7 @@ use function strtolower;
 #[CWE('1004', "Sensitive Cookie Without 'HttpOnly' Flag", 'https://cwe.mitre.org/data/definitions/1004.html')]
 final class SetCookieSecurityRule extends AbstractRule implements Rule
 {
-    public function check(AnalysisContext $context): null|array|Insight
+    public function check(AnalysisContext $context): ?Insight
     {
         $scope = $context->scope;
 
@@ -79,7 +79,7 @@ final class SetCookieSecurityRule extends AbstractRule implements Rule
             if ($resolvedArrayLiteral instanceof Array_) {
                 $normalizedOptionMap = $this->extractOptionsArrayToMap($resolvedArrayLiteral);
                 $insight = $this->validateOptionsArrayFlags($normalizedOptionMap, $currentLineNumber);
-                if (null !== $insight) {
+                if ($insight instanceof Insight) {
                     return $insight;
                 }
             }
@@ -87,7 +87,7 @@ final class SetCookieSecurityRule extends AbstractRule implements Rule
             $incrementalOptionMap = $variableArrayResolver->resolveIncrementalArrayWrites($thirdArgumentExpression->name);
             if (null !== $incrementalOptionMap) {
                 $insight = $this->validateOptionsArrayFlags($incrementalOptionMap, $currentLineNumber);
-                if (null !== $insight) {
+                if ($insight instanceof Insight) {
                     return $insight;
                 }
             }

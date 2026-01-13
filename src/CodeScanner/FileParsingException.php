@@ -20,4 +20,3 @@ final class FileParsingException extends RuntimeException
         );
     }
 }
-

@@ -69,7 +69,7 @@ final class LaravelSensitiveCookieExemptions extends AbstractRule implements Rul
         '/^remember(?:_.*)?$/i',
     ];
 
-    public function check(AnalysisContext $context): null|array|Insight
+    public function check(AnalysisContext $context): ?array
     {
         $scope = $context->scope;
 
@@ -80,7 +80,7 @@ final class LaravelSensitiveCookieExemptions extends AbstractRule implements Rul
         return $this->checkLaravelGraterThan10($context);
     }
 
-    public function checkLaravelLessThan11(AnalysisContext $context): null|array|Insight
+    public function checkLaravelLessThan11(AnalysisContext $context): ?array
     {
         $scope = $context->scope;
         /** @var Class_ $node */
@@ -118,7 +118,7 @@ final class LaravelSensitiveCookieExemptions extends AbstractRule implements Rul
         return null;
     }
 
-    public function checkLaravelGraterThan10(AnalysisContext $context): null|array|Insight
+    public function checkLaravelGraterThan10(AnalysisContext $context): ?array
     {
         $scope = $context->scope;
         if (!str_contains($this->file, 'bootstrap/app.php')) {
@@ -162,7 +162,7 @@ final class LaravelSensitiveCookieExemptions extends AbstractRule implements Rul
             }
 
             foreach (self::SENSITIVE_REGEX as $pattern) {
-                if (1 === preg_match($pattern, $normalized)) {
+                if (1 === preg_match($pattern, (string)$normalized)) {
                     $violations[] = $this->report($line, $cookieName);
 
                     break;

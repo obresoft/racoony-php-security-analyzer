@@ -45,23 +45,24 @@ Racoony identifies risky constructs, insecure configurations, and misuses of fra
 Racoony comes with a growing set of security rules, aligned with CWE standards:
 
 ### Generic Rules
-- **CWE-532**: Missing `#[\SensitiveParameter]` attribute on sensitive function parameters
-- **CWE-94**: Code injection via `eval` or unsafe dynamic code execution
 - **CWE-77**: Command injection via unsafe shell functions (`exec`, `system`, `shell_exec`, etc.)
+- **CWE-94**: Code injection via `eval` or unsafe dynamic code execution
 - **CWE-215**: Information exposure via debug functions (`var_dump`, `dd`, `print_r`, etc.)
+- **CWE-502**: Deserialization of untrusted data via unsafe usage of `unserialize()` (PHP Object Injection)
+- **CWE-532**: Missing `#[\SensitiveParameter]` attribute on sensitive function parameters
 - **CWE-614 / CWE-1275 / CWE-1004**: Insecure cookie attributes (`Secure`, `SameSite`, `HttpOnly`)
 
 ### Laravel Rules
-- **CWE-915**: Mass assignment vulnerabilities (models without `$fillable` or with unguarded properties)
-- **CWE-915**: LaravelModelRequiresFillable rule (ensures `$fillable` is explicitly defined)
-- **CWE-352**: Missing CSRF middleware (`VerifyCsrfToken`)
-- **CWE-94**: Insecure callable execution from `Request` (e.g., `call_user_func`)
-- **CWE-601**: Open redirect vulnerabilities
-- **CWE-315**: Sensitive cookies excluded from `EncryptCookies` middleware
-- **CWE-614 / CWE-1275 / CWE-1004**: Insecure cookie handling inside Laravel
 - **CWE-89**: SQL Injection (raw queries and unsafe query builder usage)
   - `LaravelColumnNameSqlInjectionRule`
   - `LaravelRawSqlInjectionRule`
+- **CWE-94**: Insecure callable execution from `Request` (e.g., `call_user_func`)
+- **CWE-315**: Sensitive cookies excluded from `EncryptCookies` middleware
+- **CWE-352**: Missing CSRF middleware (`VerifyCsrfToken`)
+- **CWE-601**: Open redirect vulnerabilities
+- **CWE-614 / CWE-1275 / CWE-1004**: Insecure cookie handling inside Laravel
+- **CWE-915**: Mass assignment vulnerabilities (models without `$fillable` or with unguarded properties)
+- **CWE-915**: LaravelModelRequiresFillable rule (ensures `$fillable` is explicitly defined)
 
 ### Spatie Query Builder Rules
 - **CWE-639**: Authorization bypass through user-controlled includes/fields (`allowedIncludes`, `allowedFields`)

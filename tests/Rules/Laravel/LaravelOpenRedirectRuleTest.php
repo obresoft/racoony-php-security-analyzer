@@ -63,6 +63,36 @@ final class LaravelOpenRedirectRuleTest extends AbstractTestCase
             ],
         ];
 
+        yield 'unsafe redirect with input() with namespace' => [
+            <<<'PHP'
+                <?php
+
+                declare(strict_types=1);
+
+                namespace App\Http\Controllers;
+
+                use Illuminate\Http\Request;
+
+                class RedirectController
+                {
+                    public function index(Request $request)
+                    {
+                        return redirect()->to($request->input('path'));
+                    }
+                }
+                PHP,
+            [
+                new Vulnerability(
+                    __FILE__,
+                    CWE::CWE_601,
+                    'Potential open redirect vulnerability detected. Validate and whitelist redirect URLs.
+[CWE-601: URL Redirection to Untrusted Site (\'Open Redirect\')] See: https://cwe.mitre.org/data/definitions/601.html',
+                    13,
+                    Severity::HIGH->value,
+                ),
+            ],
+        ];
+
         //        yield 'unsafe redirect with query() and concatenation' => [
         //            <<<'PHP'
         //                <?php

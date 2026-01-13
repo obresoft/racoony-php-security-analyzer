@@ -12,6 +12,7 @@ use PhpParser\Node\Name;
 use PhpParser\Node\Param;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\GroupUse;
+use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\Node\Stmt\Use_;
 use PhpParser\NodeFinder;
 
@@ -47,11 +48,8 @@ final readonly class ClassNameResolver
 
         if (!str_contains($nameString, '\\')) {
             $aliasLower = strtolower($nameString);
-            if (isset($useMapCaseInsensitive[$aliasLower])) {
-                return $useMapCaseInsensitive[$aliasLower];
-            }
 
-            return $nameString;
+            return $useMapCaseInsensitive[$aliasLower] ?? $nameString;
         }
 
         $parts = explode('\\', $nameString);
@@ -118,23 +116,36 @@ final readonly class ClassNameResolver
      */
     private function collectUseStatements(array $nodes): array
     {
+        foreach ($nodes as $node) {
+            if ($node instanceof Namespace_) {
+                return $this->collectUseStatementsFromNamespaceStmts($node->stmts ?? []);
+            }
+        }
+
+        return $this->collectUseStatementsFromNamespaceStmts($nodes);
+    }
+
+    /**
+     * @param Node[] $stmts
+     * @return array<string,string>
+     */
+    private function collectUseStatementsFromNamespaceStmts(array $stmts): array
+    {
         $useStatements = [];
 
-        foreach ($nodes as $node) {
-            if ($node instanceof Use_) {
-                foreach ($node->uses as $use) {
-                    $alias = $use->getAlias()->toString();
-                    $fullName = $use->name->toString();
-                    $useStatements[$alias] = $fullName;
+        foreach ($stmts as $stmt) {
+            if ($stmt instanceof Use_) {
+                foreach ($stmt->uses as $use) {
+                    $useStatements[$use->getAlias()->toString()] = $use->name->toString();
                 }
+
+                continue;
             }
 
-            if ($node instanceof GroupUse) {
-                $prefix = $node->prefix->toString();
-                foreach ($node->uses as $use) {
-                    $alias = $use->getAlias()->toString();
-                    $fullName = $prefix . '\\' . $use->name->toString();
-                    $useStatements[$alias] = $fullName;
+            if ($stmt instanceof GroupUse) {
+                $prefix = $stmt->prefix->toString();
+                foreach ($stmt->uses as $use) {
+                    $useStatements[$use->getAlias()->toString()] = $prefix . '\\' . $use->name->toString();
                 }
             }
         }

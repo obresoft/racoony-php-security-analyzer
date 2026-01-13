@@ -84,14 +84,14 @@ final class DebugFunctionExposureRule extends AbstractRule implements Rule
 
         if ($node instanceof Node\Expr\MethodCall) {
             $insight = $this->checkMethodCall($node);
-            if (null !== $insight) {
+            if ($insight instanceof Insight) {
                 return $insight;
             }
         }
 
         if ($node instanceof Node\Stmt\Echo_) {
             $insight = $this->checkEchoStatement($node);
-            if (null !== $insight) {
+            if ($insight instanceof Insight) {
                 return $insight;
             }
         }

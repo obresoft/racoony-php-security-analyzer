@@ -13,10 +13,10 @@ use PhpParser\Node\Expr\Variable;
 use function is_string;
 use function strtolower;
 
-final class VariableArrayResolver implements AnalyzerInterface
+final readonly class VariableArrayResolver implements AnalyzerInterface
 {
     public function __construct(
-        private readonly Scope $scope,
+        private Scope $scope,
     ) {}
 
     /** Returns the last Array_ literal assigned to $variableName before current line, if any. */
@@ -35,9 +35,11 @@ final class VariableArrayResolver implements AnalyzerInterface
                 if (strtolower($astNode->var->name) !== strtolower($variableName)) {
                     continue;
                 }
+
                 if ($astNode->getLine() > $currentLine) {
                     continue;
                 }
+
                 if ($astNode->expr instanceof Array_) {
                     $candidateArray = $astNode->expr;
                 }
@@ -57,6 +59,7 @@ final class VariableArrayResolver implements AnalyzerInterface
             if (!$astNode instanceof Assign) {
                 continue;
             }
+
             if ($astNode->getLine() > $currentLine) {
                 continue;
             }

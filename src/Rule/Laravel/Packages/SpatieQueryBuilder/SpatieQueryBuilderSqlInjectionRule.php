@@ -41,7 +41,7 @@ final class SpatieQueryBuilderSqlInjectionRule extends AbstractRule implements R
     ];
 
     /** @var string[] */
-    private const SUSPICIOUS_RAW_METHODS = [
+    private const array SUSPICIOUS_RAW_METHODS = [
         'selectraw', 'addselectraw',
         'whereraw', 'orwhereraw',
         'havingraw', 'orhavingraw',
@@ -51,11 +51,11 @@ final class SpatieQueryBuilderSqlInjectionRule extends AbstractRule implements R
     ];
 
     /** @var string[] */
-    private const ALLOWED_FILTER_CALLBACK_METHODS = ['callback', 'scope'];
+    private const array ALLOWED_FILTER_CALLBACK_METHODS = ['callback', 'scope'];
 
     private const string MESSAGE = 'User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).';
 
-    public function check(AnalysisContext $context): null|array|Insight
+    public function check(AnalysisContext $context): ?array
     {
         $currentScope = $context->scope;
         $callAnalyzer = $currentScope->callAnalyzer();
@@ -105,7 +105,7 @@ final class SpatieQueryBuilderSqlInjectionRule extends AbstractRule implements R
                 continue;
             }
 
-            if ($inputAnalyzer->withScope($argumentScope)->isUserInputExpr()) {
+            if ($inputAnalyzer->withScope($argumentScope)->isUserControlledInput()) {
                 $vulnerabilities[] = $this->report($argumentScope->getLine());
 
                 continue;
@@ -116,7 +116,7 @@ final class SpatieQueryBuilderSqlInjectionRule extends AbstractRule implements R
             }
         }
 
-        return empty($vulnerabilities) ? null : $vulnerabilities;
+        return [] === $vulnerabilities ? null : $vulnerabilities;
     }
 
     private function normalizeToRootVariableIfPossible(Scope $argumentScope): Scope
@@ -156,7 +156,7 @@ final class SpatieQueryBuilderSqlInjectionRule extends AbstractRule implements R
 
             $firstArgScope = $this->normalizeToRootVariableIfPossible($firstArgScope);
 
-            if ($inputAnalyzer->withScope($firstArgScope)->isUserInputExpr()
+            if ($inputAnalyzer->withScope($firstArgScope)->isUserControlledInput()
                 || $laravelRequestAnalyzer->withScope($firstArgScope)->isRequestMethodCall()
             ) {
                 $foundInsights[] = $this->report($firstArgScope->getLine());
@@ -172,7 +172,7 @@ final class SpatieQueryBuilderSqlInjectionRule extends AbstractRule implements R
     ): array {
         $foundInsights = [];
 
-        if (null === $argumentScope) {
+        if (!$argumentScope instanceof Scope) {
             return $foundInsights;
         }
 
@@ -214,7 +214,7 @@ final class SpatieQueryBuilderSqlInjectionRule extends AbstractRule implements R
                     }
 
                     $insight = $this->analyzeScopes($innerArgScope, $decomposedScope, $context);
-                    if (null !== $insight) {
+                    if ($insight instanceof Insight) {
                         $foundInsights[] = $insight;
                     }
                 }

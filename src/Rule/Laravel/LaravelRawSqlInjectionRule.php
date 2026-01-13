@@ -26,6 +26,7 @@ final class LaravelRawSqlInjectionRule extends AbstractSqlInjectionRule
             'raw',
             'whereraw',
             'fromraw',
+            'unprepared',
         ];
     }
 }

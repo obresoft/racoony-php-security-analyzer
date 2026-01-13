@@ -40,7 +40,7 @@ use function in_array;
 #[CWE('1004', "Sensitive Cookie Without 'HttpOnly' Flag", 'https://cwe.mitre.org/data/definitions/1004.html')]
 final class LaravelSetCookieSecurityRule extends AbstractRule implements Rule
 {
-    public function check(AnalysisContext $context): null|array|Insight
+    public function check(AnalysisContext $context): ?Insight
     {
         if (!str_contains($this->file, 'config/session.php')) {
             return null;

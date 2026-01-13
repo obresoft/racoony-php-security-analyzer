@@ -21,6 +21,7 @@ use Obresoft\Racoony\Rule\Laravel\LaravelSetCookieSecurityRule;
 use Obresoft\Racoony\Rule\Laravel\Packages\SpatieQueryBuilder\SpatieQueryBuilderAuthorizationBypassRule;
 use Obresoft\Racoony\Rule\Laravel\Packages\SpatieQueryBuilder\SpatieQueryBuilderSqlInjectionRule;
 use Obresoft\Racoony\Rule\PHP\MissingSensitiveParameterAttributeRule;
+use Obresoft\Racoony\Rule\PHP\UnserializeOnUntrustedDataRule;
 
 enum RuleSet: string
 {
@@ -53,6 +54,7 @@ enum RuleSet: string
             CommandInjectionRule::class,
             CodeInjectionRule::class,
             MissingSensitiveParameterAttributeRule::class,
+            UnserializeOnUntrustedDataRule::class,
         ];
     }
 

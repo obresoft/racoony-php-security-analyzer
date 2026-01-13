@@ -245,5 +245,31 @@ final class LaravelInsecureCallableFromRequestTest extends AbstractTestCase
             ],
             new ApplicationData('laravel', '10'),
         ];
+
+        yield [
+            <<<'PHP'
+                <?php
+
+                namespace App\Http\Controllers;
+
+                use Illuminate\Http\Request;
+
+                final class TaskController
+                {
+                    public function run(Request $request)
+                    {
+                         $date = $request->get('date');
+                    }
+
+                    public static function method()
+                    {
+                        date('Y-m-d');
+                    }
+                }
+                PHP,
+            [
+            ],
+            new ApplicationData('laravel', '10'),
+        ];
     }
 }

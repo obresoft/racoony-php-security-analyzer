@@ -60,7 +60,6 @@ final class LaravelModelMassAssignmentRuleTest extends AbstractTestCase
             ],
         ];
 
-
         yield 'with fillable property for class' => [
             <<<'PHP'
                 <?php

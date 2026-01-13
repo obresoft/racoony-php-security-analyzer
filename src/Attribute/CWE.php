@@ -25,6 +25,8 @@ final readonly class CWE
 
     public const string CWE_352 = 'CWE-352';
 
+    public const string CWE_502 = 'CWE-502';
+
     public const string CWE_532 = 'CWE-532';
 
     public const string CWE_1004 = '1004';

@@ -39,9 +39,6 @@ final class CommandInjectionRule extends AbstractRule implements Rule
     ];
 
     /** @var array<string> */
-    private const array DANGEROUS_SHELL_CHARS = [';', '&', '|', '>', '<', '`', '$(', '${', '\\', '"', "'", '*', '?'];
-
-    /** @var array<string> */
     private const array STREAMING_FUNCTIONS = ['file_get_contents'];
 
     /** @var array<string> */
@@ -50,7 +47,7 @@ final class CommandInjectionRule extends AbstractRule implements Rule
     /** @var array<string> */
     private const array SAFE_FUNCTIONS = ['escapeshellcmd', 'filter_var'];
 
-    public function check(AnalysisContext $context): null|array|Insight
+    public function check(AnalysisContext $context): ?Insight
     {
         $scope = $context->scope;
 
@@ -65,8 +62,8 @@ final class CommandInjectionRule extends AbstractRule implements Rule
         $inputAnalyzer = $context->analyzerResolver->get(InputAnalyzer::class);
 
         foreach ($scope->callAnalyzer()->argScopes() as $argScope) {
-            if (($argScope->arrayAnalyzer()->isArrayDimFetch() || $argScope->isPropertyFetch()) && isset($argScope->node()->var)) {
-                if ($inputAnalyzer->isUserInputExpr($argScope->node()->var)) {
+            if (($argScope->arrayAnalyzer()->isArrayDimFetch() || $argScope->isPropertyFetch()) && (property_exists($argScope->node(), 'var') && null !== $argScope->node()->var)) {
+                if ($inputAnalyzer->isUserControlledInput($argScope->node()->var)) {
                     return $this->report($scope->getLine(), $scope->callAnalyzer()->calleeName());
                 }
 
@@ -75,9 +72,10 @@ final class CommandInjectionRule extends AbstractRule implements Rule
 
             if ($argScope->isInterpolatedString()) {
                 foreach ($argScope->interpolatedPartScopes() as $argValue) {
-                    if ($inputAnalyzer->isUserInputExpr($argValue->node())) {
+                    if ($inputAnalyzer->isUserControlledInput($argValue->node())) {
                         return $this->report($scope->getLine(), $scope->callAnalyzer()->calleeName());
                     }
+
                     $argScope = $argValue;
                 }
             }
@@ -85,11 +83,12 @@ final class CommandInjectionRule extends AbstractRule implements Rule
             if (!$argScope->isVariable()) {
                 continue;
             }
+
             $calleeName = $scope->callAnalyzer()->calleeName();
             foreach ($context->scope->analyzeVariable($argScope->getVariableName()) as $data) {
                 if ($data->scope->concatAnalyzer()->isConcat() || $data->scope->isTernary()) {
                     foreach ($data->meta as $fact) {
-                        if ($inputAnalyzer->isUserInputExpr($fact->scope->node())) {
+                        if ($inputAnalyzer->isUserControlledInput($fact->scope->node())) {
                             return $this->report($fact->scope->getLine(), $calleeName);
                         }
                     }
@@ -97,13 +96,13 @@ final class CommandInjectionRule extends AbstractRule implements Rule
 
                 if (in_array($data->nameOrValue, self::SAFE_FUNCTIONS, true) && $data->scope->callAnalyzer()->isCallLike()) {
                     foreach ($data->scope->callAnalyzer()->argScopes() as $arg) {
-                        if ($inputAnalyzer->isUserInputExpr($arg->node())) {
+                        if ($inputAnalyzer->isUserControlledInput($arg->node())) {
                             return null;
                         }
                     }
                 }
 
-                if ($inputAnalyzer->isUserInputExpr($data->scope->node())) {
+                if ($inputAnalyzer->isUserControlledInput($data->scope->node())) {
                     return $this->report($scope->getLine(), $calleeName);
                 }
 

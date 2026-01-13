@@ -19,7 +19,7 @@ use PhpParser\Node\Name;
 use function count;
 use function strtolower;
 
-final class CallAnalyzer implements AnalyzerInterface
+final readonly class CallAnalyzer implements AnalyzerInterface
 {
     public function __construct(
         private Scope $scope,
@@ -145,7 +145,7 @@ final class CallAnalyzer implements AnalyzerInterface
         }
 
         $first = $this->firstArg();
-        if (null === $first) {
+        if (!$first instanceof Expr) {
             return null;
         }
 
@@ -164,7 +164,7 @@ final class CallAnalyzer implements AnalyzerInterface
         }
 
         $arg = $this->argExpr($index);
-        if (null === $arg) {
+        if (!$arg instanceof Expr) {
             return null;
         }
 
@@ -263,13 +263,11 @@ final class CallAnalyzer implements AnalyzerInterface
             $node instanceof MethodCall || $node instanceof NullsafeMethodCall || $node instanceof StaticCall || $node instanceof FuncCall;
             $node = $node instanceof MethodCall || $node instanceof NullsafeMethodCall ? $node->var : null
         ) {
-            if (!empty($node->args)) {
-                /** @var Arg $arg */
-                foreach ($node->args as $arg) {
-                    $value = $arg->value;
-                    if ($value instanceof Expr\Closure || $value instanceof Expr\ArrowFunction) {
-                        $collectedClosures[] = $value;
-                    }
+            /** @var Arg $arg */
+            foreach ($node->args as $arg) {
+                $value = $arg->value;
+                if ($value instanceof Expr\Closure || $value instanceof Expr\ArrowFunction) {
+                    $collectedClosures[] = $value;
                 }
             }
         }

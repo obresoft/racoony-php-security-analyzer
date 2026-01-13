@@ -27,7 +27,7 @@ final class LaravelRequestCallAnalyzer extends BaseAnalyzer implements AnalyzerI
     private const int MAX_VALIDATION_RECURSION_DEPTH = 8;
 
     /** @var list<string> */
-    private const array REQUEST_CLASSES = ['Illuminate\Http\Request', 'Illuminate\Foundation\Http\FormRequest'];
+    private const array REQUEST_CLASSES = ['Illuminate\Http\Request', 'Illuminate\Foundation\Http\FormRequest', 'Illuminate\Support\Facades\Request'];
 
     /** @var list<string> */
     private const array REQUEST_METHODS = [
@@ -72,7 +72,7 @@ final class LaravelRequestCallAnalyzer extends BaseAnalyzer implements AnalyzerI
 
         $call = $this->scope->matchMethodCall();
 
-        if (null === $call?->var) {
+        if (!$call?->var instanceof Expr) {
             return false;
         }
 
@@ -86,11 +86,7 @@ final class LaravelRequestCallAnalyzer extends BaseAnalyzer implements AnalyzerI
         }
 
         // Case 2: request()->...->method()
-        if ($this->isRequestHelperCall($leftmostReceiver)) {
-            return true;
-        }
-
-        return false;
+        return $this->isRequestHelperCall($leftmostReceiver);
     }
 
     /**
@@ -180,21 +176,15 @@ final class LaravelRequestCallAnalyzer extends BaseAnalyzer implements AnalyzerI
             }
 
             $safeTerminalMethods = ['only', 'except', 'all', 'keys'];
-            if (in_array($methodName, $safeTerminalMethods, true)) {
-                if ($node->var instanceof MethodCall && $node->var->name instanceof Identifier) {
-                    $intermediateMethodName = strtolower($node->var->name->toString());
-                    if ('safe' === $intermediateMethodName) {
-                        return $this->isRequestLikeReceiver($node->var->var);
-                    }
+            if (in_array($methodName, $safeTerminalMethods, true) && ($node->var instanceof MethodCall && $node->var->name instanceof Identifier)) {
+                $intermediateMethodName = strtolower($node->var->name->toString());
+                if ('safe' === $intermediateMethodName) {
+                    return $this->isRequestLikeReceiver($node->var->var);
                 }
             }
 
             return $this->withScope($this->scope->withNode($node->var))
                 ->isValidatedCall($depth + 1);
-        }
-
-        if ($node instanceof FuncCall && $node->name instanceof Name) {
-            return false;
         }
 
         return false;

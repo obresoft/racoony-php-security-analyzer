@@ -35,6 +35,7 @@ final class ProjectDataFlowBuilder
             if (false === $code) {
                 continue;
             }
+
             $stmts = $parser->parse($code, $errorHandler) ?? [];
 
             $traverser = new NodeTraverser();
@@ -85,6 +86,7 @@ final class ProjectDataFlowBuilder
                 if (isset($visited[$parent])) {
                     break;
                 }
+
                 $visited[$parent] = true;
 
                 if (!array_key_exists($parent, $raw)) {

@@ -7,10 +7,10 @@ namespace Obresoft\Racoony\Enum;
 enum Severity: string
 {
     case INFO = 'INFO';
-    case HIGH = 'HIGH';
-    case CRITICAL = 'CRITICAL';
     case LOW = 'LOW';
     case MEDIUM = 'MEDIUM';
+    case HIGH = 'HIGH';
+    case CRITICAL = 'CRITICAL';
 
     public function rank(): int
     {

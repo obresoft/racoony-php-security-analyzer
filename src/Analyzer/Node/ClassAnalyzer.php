@@ -117,11 +117,11 @@ final class ClassAnalyzer
         }
 
         if ($type instanceof UnionType) {
-            return implode('|', array_map([$this, 'getTypeAsString'], $type->types));
+            return implode('|', array_map($this->getTypeAsString(...), $type->types));
         }
 
         if ($type instanceof IntersectionType) {
-            return implode('&', array_map([$this, 'getTypeAsString'], $type->types));
+            return implode('&', array_map($this->getTypeAsString(...), $type->types));
         }
 
         return null;
@@ -276,7 +276,7 @@ final class ClassAnalyzer
      */
     private function normalizeValue(?Node $node, int $depth = 0, int $maxDepth = 25): array
     {
-        if (null === $node) {
+        if (!$node instanceof Node) {
             return ['type' => 'null', 'value' => null, 'node' => null];
         }
 
@@ -383,7 +383,7 @@ final class ClassAnalyzer
                 }
 
                 $items[] = [
-                    'key' => null !== $item->key ? $this->normalizeValue(
+                    'key' => $item->key instanceof Expr ? $this->normalizeValue(
                         $item->key,
                         $depth + 1,
                         $maxDepth,
