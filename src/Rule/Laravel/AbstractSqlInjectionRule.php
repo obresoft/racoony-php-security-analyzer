@@ -52,7 +52,7 @@ abstract class AbstractSqlInjectionRule extends AbstractRule implements Rule
 
     private const string MESSAGE = 'User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).';
 
-    final public function check(AnalysisContext $context): null|array|Insight
+    final public function check(AnalysisContext $context): ?array
     {
         $scope = $context->scope;
 
@@ -77,7 +77,7 @@ abstract class AbstractSqlInjectionRule extends AbstractRule implements Rule
         foreach ($scope->callAnalyzer()->argScopes() as $argumentScope) {
             foreach ($scope->withNode($argumentScope->node())->decomposeArgumentIntoPartScopes() as $partScope) {
                 $insight = $this->analyzeScopes($scope, $partScope, $context);
-                if (null !== $insight) {
+                if ($insight instanceof Insight) {
                     $collectedInsights[] = $insight;
                 }
             }
@@ -100,10 +100,8 @@ abstract class AbstractSqlInjectionRule extends AbstractRule implements Rule
 
             foreach ($var as $varValue) {
                 $variableScope = $varValue->scope;
-                if ($variableScope->callAnalyzer()->isMethodCall()) {
-                    if ($requestCallAnalyzer->withScope($variableScope)->isRequestMethodCall()) {
-                        return $this->report($scope->getLine());
-                    }
+                if ($variableScope->callAnalyzer()->isMethodCall() && $requestCallAnalyzer->withScope($variableScope)->isRequestMethodCall()) {
+                    return $this->report($scope->getLine());
                 }
             }
         }

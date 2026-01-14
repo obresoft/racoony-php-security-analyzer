@@ -35,7 +35,7 @@ final class MissingSensitiveParameterAttributeRule extends AbstractRule implemen
         'apitoken',
     ];
 
-    public function check(AnalysisContext $context): null|array|Insight
+    public function check(AnalysisContext $context): ?Insight
     {
         $scope = $context->scope;
         $paramAnalyzer = $scope->paramAnalyzer();

@@ -8,9 +8,9 @@ use Obresoft\Racoony\Rule\RuleSet;
 
 use const DIRECTORY_SEPARATOR;
 
-final class ConfigurationResolver
+final readonly class ConfigurationResolver
 {
-    private readonly ApplicationDetector $applicationDetector;
+    private ApplicationDetector $applicationDetector;
 
     public function __construct()
     {
@@ -43,7 +43,7 @@ final class ConfigurationResolver
 
     private function applicationDataResolver(RacoonyConfig $config): ApplicationData
     {
-        if (null !== $config->getApplication()) {
+        if ($config->getApplication() instanceof ApplicationData) {
             return $config->getApplication();
         }
 

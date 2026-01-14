@@ -7,13 +7,13 @@ namespace Obresoft\Racoony\Analyzer\Node;
 use Obresoft\Racoony\Analyzer\AnalyzerInterface;
 use Obresoft\Racoony\Analyzer\Scope;
 use PhpParser\Node;
+use PhpParser\Node\ArrayItem;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayDimFetch;
-use PhpParser\Node\Expr\ArrayItem;
 
 use function is_object;
 
-final class ArrayAnalyzer implements AnalyzerInterface
+final readonly class ArrayAnalyzer implements AnalyzerInterface
 {
     public function __construct(
         private Scope $scope,
@@ -22,6 +22,11 @@ final class ArrayAnalyzer implements AnalyzerInterface
     public function isArray(): bool
     {
         return $this->currentNode() instanceof Array_;
+    }
+
+    public function isArrayItem(): bool
+    {
+        return $this->currentNode() instanceof ArrayItem;
     }
 
     public function isArrayDimFetch(): bool
@@ -34,28 +39,22 @@ final class ArrayAnalyzer implements AnalyzerInterface
      */
     public function arrayItems(): array
     {
-        $node = $this->currentNode();
-        if (!$node instanceof Array_) {
+        if (!$this->scope->arrayAnalyzer()->isArray()) {
             return [];
         }
 
-        /** @var list<ArrayItem>|null $items */
-        $items = $node->items ?? [];
+        $node = $this->currentNode();
 
-        return $items ?? [];
+        return $node->items ?? [];
     }
 
     public function getFirstArrayItem(): ?ArrayItem
     {
-        $node = $this->currentNode();
-        if (!$node instanceof Array_) {
+        if (!$this->scope->arrayAnalyzer()->isArray()) {
             return null;
         }
 
-        /** @var list<ArrayItem>|null $items */
-        $items = $node->items ?? null;
-
-        return $items[0] ?? null;
+        return $this->arrayItems()[0] ?? null;
     }
 
     /**
@@ -106,7 +105,11 @@ final class ArrayAnalyzer implements AnalyzerInterface
     {
         $result = [];
         foreach ($this->extractArrayKeyValuePairs() as $pair) {
-            if (null === $pair['key'] || null === $pair['valueNode']) {
+            if (null === $pair['key']) {
+                continue;
+            }
+
+            if (null === $pair['valueNode']) {
                 continue;
             }
 

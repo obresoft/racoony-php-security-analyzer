@@ -16,7 +16,7 @@ use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\NodeFinder;
 
-final class ClosureAnalyzer implements AnalyzerInterface
+final readonly class ClosureAnalyzer implements AnalyzerInterface
 {
     public function __construct(
         private Scope $scope,
@@ -36,7 +36,7 @@ final class ClosureAnalyzer implements AnalyzerInterface
     {
         $currentNode = $this->scope->node();
 
-        if (!($currentNode instanceof ClosureNode || $currentNode instanceof ArrowFunction)) {
+        if (!$currentNode instanceof ClosureNode && !$currentNode instanceof ArrowFunction) {
             return [];
         }
 
@@ -52,19 +52,21 @@ final class ClosureAnalyzer implements AnalyzerInterface
         $nodeFinder = new NodeFinder();
 
         /** @var list<Node> $invocationNodes */
-        $invocationNodes = $nodeFinder->find($searchRoots, static function (Node $node): bool {
+        $invocationNodes = $nodeFinder->find(
+            $searchRoots,
             // We consider any "invocation-like" constructs as targets:
             // - FuncCall: request(), DB(), etc.
             // - MethodCall: $q->whereRaw(), request()->input(), etc.
             // - StaticCall: DB::raw(), SomeClass::make(), etc.
             // - Include_: include/require (code execution surface)
             // - New_: new SomeClass(...) (can create dynamic objects used in sinks)
-            return $node instanceof FuncCall
-                || $node instanceof MethodCall
-                || $node instanceof StaticCall
-                || $node instanceof Include_
-                || $node instanceof New_;
-        });
+
+            static fn (Node $node): bool => $node instanceof FuncCall
+            || $node instanceof MethodCall
+            || $node instanceof StaticCall
+            || $node instanceof Include_
+            || $node instanceof New_,
+        );
 
         $invocationScopes = [];
 

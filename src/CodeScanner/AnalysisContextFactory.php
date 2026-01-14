@@ -16,12 +16,15 @@ use PhpParser\Node;
 use RuntimeException;
 
 use function count;
+use function in_array;
 use function is_array;
 
 final class AnalysisContextFactory
 {
     private ?FileIndex $fileIndex = null;
+
     private ?VariableAnalyzer $variableAnalyzerV2 = null;
+
     private ?GlobalAnalyzerFactory $globalAnalyzerFactory = null;
 
     /** @var list<Node> */
@@ -43,7 +46,7 @@ final class AnalysisContextFactory
         ?ProjectDataFlowIndex $projectDataFlowIndex,
         ?ApplicationData $applicationData = null,
     ): AnalysisContext {
-        if (null === $this->fileIndex || null === $this->variableAnalyzerV2 || null === $this->globalAnalyzerFactory) {
+        if (in_array(null, [$this->fileIndex, $this->variableAnalyzerV2, $this->globalAnalyzerFactory], true)) {
             throw new RuntimeException(
                 'AnalysisContextFactory must be initialized with initializeForFile() before use.',
             );
@@ -103,4 +106,3 @@ final class AnalysisContextFactory
         return $flatNodes;
     }
 }
-

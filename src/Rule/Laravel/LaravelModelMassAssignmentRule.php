@@ -22,7 +22,7 @@ use Obresoft\Racoony\Rule\Rule;
 #[CWE('915', 'Improperly Controlled Modification of Dynamically-Determined Object Attributes', 'https://cwe.mitre.org/data/definitions/915.html')]
 final class LaravelModelMassAssignmentRule extends AbstractRule implements Rule
 {
-    public function check(AnalysisContext $context): null|array|Insight
+    public function check(AnalysisContext $context): ?Insight
     {
         if (!$context->scope->isClassCall()) {
             return null;

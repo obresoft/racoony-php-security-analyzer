@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Obresoft\Racoony\Tests\Rules\Laravel;
 
+use App\Models\User;
 use Exception;
 use Obresoft\Racoony\Attribute\CWE;
 use Obresoft\Racoony\Config\ApplicationData;

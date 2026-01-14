@@ -16,7 +16,7 @@ use function is_string;
 
 final class LaravelSpatieQueryBuilderAnalyzer extends BaseAnalyzer implements AnalyzerInterface
 {
-    private const BUILDER_CLASS_NAME = 'Spatie\QueryBuilder\QueryBuilder';
+    private const string BUILDER_CLASS_NAME = 'Spatie\QueryBuilder\QueryBuilder';
 
     private const string ALLOWED_SORT_CLASS_NAME = 'Spatie\QueryBuilder\AllowedSort';
 

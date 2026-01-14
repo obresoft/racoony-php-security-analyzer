@@ -23,7 +23,7 @@ use function is_array;
  */
 abstract class AbstractLaravelRequiredWebMiddlewareRule extends AbstractRule implements Rule
 {
-    final public function check(AnalysisContext $context): null|array|Insight
+    final public function check(AnalysisContext $context): ?Insight
     {
         $scope = $context->scope;
 
@@ -75,6 +75,7 @@ abstract class AbstractLaravelRequiredWebMiddlewareRule extends AbstractRule imp
 
                     return;
                 }
+
                 if ('array' === $v['type']) {
                     foreach ($v['value'] as $item) {
                         $visit($item);
@@ -96,7 +97,7 @@ abstract class AbstractLaravelRequiredWebMiddlewareRule extends AbstractRule imp
         return $out;
     }
 
-    private function checkLaravelLessThan11(AnalysisContext $context): null|array|Insight
+    private function checkLaravelLessThan11(AnalysisContext $context): ?Insight
     {
         /** @var Class_ $node */
         $node = $context->scope->node();

@@ -29,7 +29,7 @@ final class LaravelInsecureCallableFromRequest extends AbstractRule implements R
         'forward_static_call_array',
     ];
 
-    public function check(AnalysisContext $context): null|array|Insight
+    public function check(AnalysisContext $context): ?Insight
     {
         $scope = $context->scope;
 
@@ -38,11 +38,11 @@ final class LaravelInsecureCallableFromRequest extends AbstractRule implements R
         }
 
         $inputAnalyzer = $context->analyzerResolver->get(LaravelRequestCallAnalyzer::class);
-        $nodeValueScope = isset($scope->node()->name) && $scope->node()->name instanceof Node
+        $nodeValueScope = property_exists($scope->node(), 'name') && null !== $scope->node()->name && $scope->node()->name instanceof Node
             ? $scope->withNode($scope->node()->name)
             : null;
 
-        if (null !== $nodeValueScope && $nodeValueScope->isVariable()) {
+        if ($nodeValueScope instanceof Scope && $nodeValueScope->isVariable()) {
             return $this->detectVulnerability($nodeValueScope, $nodeValueScope->nameAsString(), $inputAnalyzer);
         }
 
@@ -53,7 +53,7 @@ final class LaravelInsecureCallableFromRequest extends AbstractRule implements R
                 $variableName = $argScope->nameAsString() ?? '';
                 if ($argScope->arrayAnalyzer()->isArray()) {
                     $argScope = $scope->withNode($argScope->arrayAnalyzer()->getFirstArrayItem());
-                    $variableName = isset($argScope->node()->value) && $argScope->node()->value instanceof Variable
+                    $variableName = property_exists($argScope->node(), 'value') && null !== $argScope->node()->value && $argScope->node()->value instanceof Variable
                         ? $argScope->node()->value->name
                         : '';
                 }
@@ -67,14 +67,16 @@ final class LaravelInsecureCallableFromRequest extends AbstractRule implements R
 
     private function detectVulnerability(Scope $scope, string $varName, LaravelRequestCallAnalyzer $inputAnalyzer): ?Insight
     {
-        $var = $scope->analyzeVariable($varName);
+        if (!$scope->isVariable() && !$scope->arrayAnalyzer()->isArrayItem()) {
+            return null;
+        }
 
-        foreach ($var as $varValue) {
-            $variableScope = $varValue->scope;
-            if ($variableScope->callAnalyzer()->isMethodCall()) {
-                if ($inputAnalyzer->withScope($variableScope)->isRequestMethodCall()) {
-                    return $this->report($varValue->line);
-                }
+        $analyzedVariables = $scope->analyzeVariable($varName);
+
+        foreach ($analyzedVariables as $variableValue) {
+            $variableScope = $variableValue->scope;
+            if ($variableScope->callAnalyzer()->isMethodCall() && $inputAnalyzer->withScope($variableScope)->isRequestMethodCall()) {
+                return $this->report($variableValue->line);
             }
         }
 

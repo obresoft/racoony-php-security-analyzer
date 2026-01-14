@@ -11,7 +11,7 @@ use PhpParser\Node\Param;
 
 use function is_string;
 
-final class ParamAnalyzer implements AnalyzerInterface
+final readonly class ParamAnalyzer implements AnalyzerInterface
 {
     public function __construct(
         private Scope $scope,

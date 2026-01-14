@@ -16,41 +16,46 @@ use function strtolower;
 final class InputAnalyzer extends BaseAnalyzer implements AnalyzerInterface
 {
     /** @var list<string> */
-    private const array SUPERGLOBALS = [
+    private const array DIRECT_USER_INPUT = [
         '_get',
         '_post',
         '_request',
         '_cookie',
         '_files',
+    ];
+
+    private const array NON_USER_INPUT = [
         '_env',
         '_session',
+        '_server',
     ];
 
     public function __construct(
         protected Scope $scope,
     ) {}
 
-    public function isUserInputExpr(?Node $expr = null): bool
+    public function isUserControlledInput(?Node $expr = null): bool
     {
+        $allSuperGlobals = array_merge(self::DIRECT_USER_INPUT, self::NON_USER_INPUT);
         $expr ??= $this->scope->node() instanceof Expr ? $this->scope->node() : null;
-        if (!$expr) {
+        if (!$expr instanceof Node) {
             return false;
         }
 
         // $_GET, $_POST, ...
         if ($expr instanceof Variable && is_string($expr->name)) {
-            return in_array(strtolower($expr->name), self::SUPERGLOBALS, true);
+            return in_array(strtolower($expr->name), $allSuperGlobals, true);
         }
 
         // $_GET['x'], $_POST['y'], ...
         if ($expr instanceof ArrayDimFetch) {
             $var = $expr->var;
             if ($var instanceof ArrayDimFetch) {
-                return $this->isUserInputExpr($var->var);
+                return $this->isUserControlledInput($var->var);
             }
 
             if ($var instanceof Variable && is_string($var->name)) {
-                return in_array(strtolower($var->name), self::SUPERGLOBALS, true);
+                return in_array(strtolower($var->name), $allSuperGlobals, true);
             }
         }
 
@@ -60,7 +65,7 @@ final class InputAnalyzer extends BaseAnalyzer implements AnalyzerInterface
     public function anyArgIsUserInput(): bool
     {
         foreach ($this->scope->callAnalyzer()->argScopes() as $argScope) {
-            if ($argScope instanceof Scope && $this->isUserInputExpr(
+            if ($argScope instanceof Scope && $this->isUserControlledInput(
                 $argScope->node() instanceof Expr ? $argScope->node() : null,
             )) {
                 return true;
@@ -68,16 +73,5 @@ final class InputAnalyzer extends BaseAnalyzer implements AnalyzerInterface
         }
 
         return false;
-    }
-
-    public function isSuperGlobalInput(): bool
-    {
-        if (!$this->scope->isVariable()) {
-            return false;
-        }
-
-        $varName = $this->scope->nameAsString();
-
-        return null !== $varName && in_array(strtolower($varName), self::SUPERGLOBALS, true);
     }
 }

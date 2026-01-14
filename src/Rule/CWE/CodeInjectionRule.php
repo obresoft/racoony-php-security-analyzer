@@ -12,6 +12,7 @@ use Obresoft\Racoony\Insight\Insight;
 use Obresoft\Racoony\Insight\Recommendation;
 use Obresoft\Racoony\Rule\AbstractRule;
 use Obresoft\Racoony\Rule\Rule;
+use PhpParser\Node\Expr;
 
 use function sprintf;
 
@@ -28,37 +29,35 @@ final class CodeInjectionRule extends AbstractRule implements Rule
 {
     private const string VULNERABILITY_MESSAGE = 'Potential code injection detected: user-controlled input %s is used via the %s. Sanitize input properly before use.';
 
-    public function check(AnalysisContext $context): null|array|Insight
+    public function check(AnalysisContext $context): ?Insight
     {
         $scope = $context->scope;
         $node = $scope->node();
 
-        if (!($scope->isEval() || $scope->isInclude())) {
+        if (!$scope->isEval() && !$scope->isInclude()) {
             return null;
         }
 
         $usedFunctionName = $scope->isEval() ? 'eval' : $scope->getIncludeName();
         $codeExpression = $scope->getNodeExpression();
-        if (null === $codeExpression) {
+        if (!$codeExpression instanceof Expr) {
             return null;
         }
 
         $inputAnalyzer = $context->analyzerResolver->get(InputAnalyzer::class);
         $codeExpressionScope = $scope->withNode($codeExpression);
 
-        if ($codeExpressionScope->arrayAnalyzer()->isArrayDimFetch() || $codeExpressionScope->isPropertyFetch()) {
-            if ($inputAnalyzer->isUserInputExpr($codeExpressionScope->node())) {
-                $rootName = $codeExpressionScope->getRootVariable()->name ?? '';
+        if (($codeExpressionScope->arrayAnalyzer()->isArrayDimFetch() || $codeExpressionScope->isPropertyFetch()) && $inputAnalyzer->isUserControlledInput($codeExpressionScope->node())) {
+            $rootName = $codeExpressionScope->getRootVariable()->name ?? '';
 
-                return $this->report($node->getLine(), $usedFunctionName, $rootName);
-            }
+            return $this->report($node->getLine(), $usedFunctionName, $rootName);
         }
 
         if ($codeExpressionScope->isVariable()) {
             foreach ($context->scope->analyzeVariable($codeExpressionScope->getVariableName()) as $factData) {
                 if ($factData->scope->concatAnalyzer()->isConcat()) {
                     foreach ($factData->meta[0]->meta as $partFact) {
-                        if ($inputAnalyzer->isUserInputExpr($partFact->scope->node())) {
+                        if ($inputAnalyzer->isUserControlledInput($partFact->scope->node())) {
                             $rootName = $partFact->scope->getRootVariable()->name ?? '';
 
                             return $this->report($node->getLine(), $usedFunctionName, $rootName);
@@ -66,7 +65,7 @@ final class CodeInjectionRule extends AbstractRule implements Rule
                     }
                 }
 
-                if ($inputAnalyzer->isUserInputExpr($factData->scope->node())) {
+                if ($inputAnalyzer->isUserControlledInput($factData->scope->node())) {
                     $rootName = $codeExpressionScope->getRootVariable()->name ?? '';
 
                     return $this->report($node->getLine(), $usedFunctionName, $rootName);
@@ -81,7 +80,7 @@ final class CodeInjectionRule extends AbstractRule implements Rule
         return null;
     }
 
-    private function report(int $lineNumber, string $usedFunctionName, string $userInputVariableName): array|Insight
+    private function report(int $lineNumber, string $usedFunctionName, string $userInputVariableName): Insight
     {
         return $this->createInsight(
             CWE::CWE_94,
@@ -91,7 +90,7 @@ final class CodeInjectionRule extends AbstractRule implements Rule
         );
     }
 
-    private function reportRecommendation(int $lineNumber, string $usedFunctionName): array|Insight
+    private function reportRecommendation(int $lineNumber, string $usedFunctionName): Insight
     {
         return $this->createInsight(
             CWE::CWE_94,

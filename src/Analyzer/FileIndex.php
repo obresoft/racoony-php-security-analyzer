@@ -81,6 +81,7 @@ final class FileIndex
             if (isset($this->visited[$node])) {
                 return;
             }
+
             $this->visited[$node] = true;
 
             foreach ($node->getSubNodeNames() as $subNodeName) {
@@ -157,15 +158,11 @@ final class FileIndex
             return array_values(array_unique($out));
         }
 
-        if ($type instanceof IntersectionType) {
-            $out = [];
-            foreach ($type->types as $t) {
-                $out = array_merge($out, $this->normalizeTypeToStrings($t));
-            }
-
-            return array_values(array_unique($out));
+        $out = [];
+        foreach ($type->types as $t) {
+            $out = array_merge($out, $this->normalizeTypeToStrings($t));
         }
 
-        return [];
+        return array_values(array_unique($out));
     }
 }

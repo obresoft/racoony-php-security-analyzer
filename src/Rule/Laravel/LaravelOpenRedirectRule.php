@@ -24,7 +24,7 @@ final class LaravelOpenRedirectRule extends AbstractRule implements Rule
 {
     private const string MSG = 'Potential open redirect vulnerability detected. Validate and whitelist redirect URLs.';
 
-    public function check(AnalysisContext $context): null|array|Insight
+    public function check(AnalysisContext $context): ?Insight
     {
         $scope = $context->scope;
         $redirectAnalyzer = $context->analyzerResolver->get(LaravelRedirectAnalyzer::class);
@@ -35,7 +35,7 @@ final class LaravelOpenRedirectRule extends AbstractRule implements Rule
             return null;
         }
 
-        if ($scope->callAnalyzer()->isCallLike() && !$redirectAnalyzer->isDangerousMethodCall()) {
+        if (!$redirectAnalyzer->isDangerousMethodCall()) {
             return null;
         }
 

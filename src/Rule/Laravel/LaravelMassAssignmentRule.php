@@ -19,7 +19,7 @@ final class LaravelMassAssignmentRule extends AbstractRule implements Rule
 {
     private const string MESSAGE = 'Potential mass assignment: user-controlled data is passed. Use validated input and explicit attribute mapping (fillable/guarded).';
 
-    public function check(AnalysisContext $context): null|array|Insight
+    public function check(AnalysisContext $context): ?Insight
     {
         $scope = $context->scope;
 
@@ -58,7 +58,7 @@ final class LaravelMassAssignmentRule extends AbstractRule implements Rule
             // Case A: array argument like ['name' => $request->get('name')]
             if ($argScope->arrayAnalyzer()->isArray()) {
                 $stringKeyToValueScope = $argScope->arrayAnalyzer()->extractArrayStringKeyToValueScopes();
-                foreach ($stringKeyToValueScope as $attributeName => $valueScope) {
+                foreach ($stringKeyToValueScope as $valueScope) {
                     yield ['valueScope' => $valueScope, 'sourceLine' => $valueScope->getLine()];
                 }
 

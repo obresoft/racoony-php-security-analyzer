@@ -30,7 +30,7 @@ final class AttributeAnalyzer extends BaseAnalyzer implements AnalyzerInterface
 
         $nameNode = $node->getAttribute('resolvedName') ?? $node->name;
 
-        return ltrim($nameNode->toString(), '\\');
+        return ltrim((string)$nameNode->toString(), '\\');
     }
 
     public function getShortName(): string

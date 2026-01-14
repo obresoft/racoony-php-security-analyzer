@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Obresoft\Racoony\DataFlow;
 
-final class MethodInheritanceDto
+final readonly class MethodInheritanceDto
 {
     public function __construct(
-        public readonly string $methodName,
-        public readonly string $declaredInClassFqcn,
+        public string $methodName,
+        public string $declaredInClassFqcn,
     ) {}
 }

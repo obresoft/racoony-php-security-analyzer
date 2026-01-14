@@ -14,6 +14,7 @@ use Obresoft\Racoony\Enum\Severity;
 use Obresoft\Racoony\Insight\Insight;
 use Obresoft\Racoony\Rule\AbstractRule;
 use Obresoft\Racoony\Rule\Rule;
+use PhpParser\Node\Expr\Variable;
 
 use function in_array;
 
@@ -38,7 +39,7 @@ final class SpatieQueryBuilderAuthorizationBypassRule extends AbstractRule imple
 
     private const string MESSAGE = 'User-controlled include/fieldset may bypass authorization. An attacker can request unauthorized relations or fields.';
 
-    public function check(AnalysisContext $context): null|array|Insight
+    public function check(AnalysisContext $context): ?array
     {
         $currentScope = $context->scope;
         $callAnalyzer = $currentScope->callAnalyzer();
@@ -71,7 +72,7 @@ final class SpatieQueryBuilderAuthorizationBypassRule extends AbstractRule imple
                 continue;
             }
 
-            if ($inputAnalyzer->withScope($normalizedArgumentScope)->isUserInputExpr()) {
+            if ($inputAnalyzer->withScope($normalizedArgumentScope)->isUserControlledInput()) {
                 $vulnerabilities[] = $this->report($normalizedArgumentScope->getLine());
 
                 continue;
@@ -82,14 +83,14 @@ final class SpatieQueryBuilderAuthorizationBypassRule extends AbstractRule imple
             }
         }
 
-        return empty($vulnerabilities) ? null : $vulnerabilities;
+        return [] === $vulnerabilities ? null : $vulnerabilities;
     }
 
     private function normalizeToRootVariableIfPossible(Scope $argumentScope): Scope
     {
-        if (($argumentScope->arrayAnalyzer()->isArrayDimFetch() || $argumentScope->isPropertyFetch()) && isset($argumentScope->node()->var)) {
+        if (($argumentScope->arrayAnalyzer()->isArrayDimFetch() || $argumentScope->isPropertyFetch()) && (property_exists($argumentScope->node(), 'var') && null !== $argumentScope->node()->var)) {
             $rootVariable = $argumentScope->getRootVariable();
-            if (null !== $rootVariable) {
+            if ($rootVariable instanceof Variable) {
                 return $argumentScope->withNode($rootVariable);
             }
         }

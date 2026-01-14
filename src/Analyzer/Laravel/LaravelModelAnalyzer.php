@@ -7,6 +7,7 @@ namespace Obresoft\Racoony\Analyzer\Laravel;
 use Obresoft\Racoony\Analyzer\AnalyzerInterface;
 use Obresoft\Racoony\Analyzer\BaseAnalyzer;
 use Obresoft\Racoony\Analyzer\Scope;
+use Obresoft\Racoony\DataFlow\ClassDataDto;
 use Obresoft\Racoony\DataFlow\ProjectDataFlowIndex;
 use Obresoft\Racoony\Resolver\ClassNameResolver;
 use PhpParser\Node\Expr\Array_;
@@ -78,7 +79,7 @@ final class LaravelModelAnalyzer extends BaseAnalyzer implements AnalyzerInterfa
         foreach ($node->stmts as $stmt) {
             if ($stmt instanceof Property) {
                 foreach ($stmt->props as $prop) {
-                    if ($prop->name->toString() === 'fillable') {
+                    if ('fillable' === $prop->name->toString()) {
                         return true;
                     }
                 }
@@ -98,7 +99,7 @@ final class LaravelModelAnalyzer extends BaseAnalyzer implements AnalyzerInterfa
         foreach ($node->stmts as $stmt) {
             if ($stmt instanceof Property) {
                 foreach ($stmt->props as $prop) {
-                    if ($prop->name->toString() === 'guarded') {
+                    if ('guarded' === $prop->name->toString()) {
                         return true;
                     }
                 }
@@ -112,7 +113,7 @@ final class LaravelModelAnalyzer extends BaseAnalyzer implements AnalyzerInterfa
     {
         $array = $this->guardedArrayItems();
 
-        return $array instanceof Array_ && count($array->items) === 0;
+        return $array instanceof Array_ && [] === $array->items;
     }
 
     public function guardedArrayItems(): ?Array_
@@ -125,13 +126,15 @@ final class LaravelModelAnalyzer extends BaseAnalyzer implements AnalyzerInterfa
         foreach ($node->stmts as $stmt) {
             if ($stmt instanceof Property) {
                 foreach ($stmt->props as $prop) {
-                    if ($prop->name->toString() !== 'guarded') {
+                    if ('guarded' !== $prop->name->toString()) {
                         continue;
                     }
+
                     $default = $prop->default;
                     if ($default instanceof Array_) {
                         return $default;
                     }
+
                     return null;
                 }
             }
@@ -230,7 +233,7 @@ final class LaravelModelAnalyzer extends BaseAnalyzer implements AnalyzerInterfa
         $className = $this->resolver->resolveClassName($resolvedClass);
         $findClassData = $this->projectDataFlowIndex->getClassData($className);
 
-        if (null === $findClassData) {
+        if (!$findClassData instanceof ClassDataDto) {
             return false;
         }
 
@@ -245,6 +248,6 @@ final class LaravelModelAnalyzer extends BaseAnalyzer implements AnalyzerInterfa
 
         $methodNameCall = $this->scope->nameAsString();
 
-        return in_array(mb_strtolower($methodNameCall), self::STATIC_SINK_METHODS, true);
+        return in_array(mb_strtolower((string)$methodNameCall), self::STATIC_SINK_METHODS, true);
     }
 }
