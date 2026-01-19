@@ -56,6 +56,11 @@ final class Scope
         return $this->node->getLine();
     }
 
+    public function getEndLine(): int
+    {
+        return $this->node->getEndLine();
+    }
+
     /**
      * @phpstan-assert-if-true New_ $this->node
      */
@@ -430,6 +435,11 @@ final class Scope
     public function attributeAnalyzer(): AttributeAnalyzer
     {
         return new AttributeAnalyzer($this);
+    }
+
+    public function callChainAnalyzer(): CallChainAnalyzer
+    {
+        return new CallChainAnalyzer($this);
     }
 
     public function decomposeArgumentIntoPartScopes(): iterable

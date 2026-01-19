@@ -43,18 +43,18 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
                 <?php
                 use Illuminate\Http\Request;
                 use App\Http\Controllers\Controller;
-                use App\Models\User;
+                use App\Models\Photo;
 
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
                     public function store(Request $request): void
                     {
                         $validatedData = $request->validate([
-                            'name' => 'required|string',
-                            'email' => 'required|email',
+                            'title' => 'required|string',
+                            'path'  => 'required|string',
                         ]);
 
-                        User::where('id', 1)->update($validatedData);
+                        Photo::where('id', 1)->update($validatedData);
                     }
                 }
                 PHP,
@@ -66,17 +66,17 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
                 <?php
                 use Illuminate\Http\Request;
                 use App\Http\Controllers\Controller;
-                use App\Models\User;
+                use App\Models\Photo;
 
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
                     public function store(Request $request): void
                     {
                         $validatedData = $request->validate([
-                            'email' => 'required|email',
-                            'name'  => 'required|string',
+                            'path'  => 'required|string',
+                            'title' => 'required|string',
                         ]);
-                        User::firstOrCreate(['email' => $validatedData['email']], ['name' => $validatedData['name']]);
+                        Photo::firstOrCreate(['path' => $validatedData['path']], ['title' => $validatedData['title']]);
                     }
                 }
                 PHP,
@@ -89,17 +89,17 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
 
                 use Illuminate\Http\Request;
                 use App\Http\Controllers\Controller;
-                use App\Models\User;
+                use App\Models\Photo;
 
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
                     public function store(Request $request): void
                     {
                         $validatedData = $request->validate([
-                            'email' => 'required|email',
-                            'name'  => 'required|string',
+                            'path'  => 'required|string',
+                            'title' => 'required|string',
                         ]);
-                        User::upsert([$validatedData], ['email'], ['name']);
+                        Photo::upsert([$validatedData], ['path'], ['title']);
                     }
                 }
                 PHP,
@@ -111,26 +111,26 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
                 <?php
 
                 use App\Http\Controllers\Controller;
-                use App\Models\User;
+                use App\Models\Photo;
                 use Illuminate\Foundation\Http\FormRequest;
 
-                class StoreUserRequest extends FormRequest
+                class StorePhotoRequest extends FormRequest
                 {
                     public function rules(): array
                     {
                         return [
-                            'name'  => 'required|string',
-                            'email' => 'required|email',
+                            'title' => 'required|string',
+                            'path'  => 'required|string',
                         ];
                     }
                 }
 
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
-                    public function store(StoreUserRequest $request): void
+                    public function store(StorePhotoRequest $request): void
                     {
                         $data = $request->validated();
-                        User::create($data);
+                        Photo::create($data);
                     }
                 }
                 PHP,
@@ -143,20 +143,20 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
 
                 use Illuminate\Http\Request;
                 use App\Http\Controllers\Controller;
-                use App\Models\User;
+                use App\Models\Photo;
 
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
                     public function store(Request $request): void
                     {
                         $request->validate([
-                            'name'  => 'required|string',
-                            'email' => 'required|email',
-                            'role'  => 'nullable|string',
+                            'title'  => 'required|string',
+                            'path' => 'required|string',
+                            'is_public' => 'nullable|boolean',
                         ]);
 
-                        $whitelisted = $request->safe()->only(['name', 'email']);
-                        User::create($whitelisted);
+                        $whitelisted = $request->safe()->only(['title', 'path']);
+                        Photo::create($whitelisted);
                     }
                 }
                 PHP,
@@ -169,25 +169,25 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
 
                 use Illuminate\Http\Request;
                 use App\Http\Controllers\Controller;
-                use App\Models\User;
+                use App\Models\Photo;
 
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
                     public function store(Request $request): void
                     {
                         $validatedData = $request->validate([
-                            'name'  => 'required|string',
-                            'email' => 'required|email',
-                            'bio'   => 'nullable|string',
+                            'title' => 'required|string',
+                            'path' => 'required|string',
+                            'description' => 'nullable|string',
                         ]);
 
                         $attributes = [
-                            'name'  => $validatedData['name'],
-                            'email' => $validatedData['email'],
-                            'bio'   => $validatedData['bio'] ?? null,
+                            'title' => $validatedData['title'],
+                            'path'  => $validatedData['path'],
+                            'description' => $validatedData['description'] ?? null,
                         ];
 
-                        User::where('id', 1)->update($attributes);
+                        Photo::where('id', 1)->update($attributes);
                     }
                 }
                 PHP,
@@ -199,39 +199,39 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
                 <?php
                 use Illuminate\Http\Request;
                 use App\Http\Controllers\Controller;
-                use App\Models\User;
+                use App\Models\Photo;
 
-                final class UserDto
+                final class PhotoDto
                 {
                     public function __construct(
-                        public string $name,
-                        public string $email,
+                        public string $title,
+                        public string $path,
                     ) {}
 
-                    /** @param array{name:string,email:string} $data */
+                    /** @param array{title:string,path:string} $data */
                     public static function fromValidatedArray(array $data): self
                     {
-                        return new self($data['name'], $data['email']);
+                        return new self($data['title'], $data['path']);
                     }
 
-                    /** @return array{name:string,email:string} */
+                    /** @return array{title:string,path:string} */
                     public function toArray(): array
                     {
-                        return ['name' => $this->name, 'email' => $this->email];
+                        return ['title' => $this->title, 'path' => $this->path];
                     }
                 }
 
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
                     public function store(Request $request): void
                     {
                         $validated = $request->validate([
-                            'name'  => 'required|string',
-                            'email' => 'required|email',
+                            'title' => 'required|string',
+                            'path'  => 'required|string',
                         ]);
 
-                        $dto = UserDto::fromValidatedArray($validated);
-                        User::create($dto->toArray());
+                        $dto = PhotoDto::fromValidatedArray($validated);
+                        Photo::create($dto->toArray());
                     }
                 }
                 PHP,
@@ -244,24 +244,24 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
 
                 use Illuminate\Http\Request;
                 use App\Http\Controllers\Controller;
-                use App\Models\User;
+                use App\Models\Photo;
 
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
                     public function store(Request $request): void
                     {
                         $validated = $request->validate([
-                            'name'  => 'required|string',
+                            'title' => 'required|string',
                             'email' => 'required|email',
-                            'bio'   => 'nullable|string',
+                            'path' => 'nullable|string',
                         ]);
 
                         $subset = [
-                            'name'  => $validated['name'],
-                            'email' => $validated['email'],
+                            'title' => $validated['title'],
+                            'path'  => $validated['path'],
                         ];
 
-                        User::where('id', 2)->update($subset);
+                        Photo::where('id', 2)->update($subset);
                     }
                 }
                 PHP,
@@ -273,13 +273,13 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
                 <?php
                 use Illuminate\Http\Request;
                 use App\Http\Controllers\Controller;
-                use App\Models\User;
+                use App\Models\Photo;
 
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
                     public function store(Request $request): void
                     {
-                        User::update($request->all());
+                        Photo::update($request->all());
                     }
                 }
                 PHP,
@@ -300,13 +300,13 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
                 <?php
                 use Illuminate\Http\Request;
                 use App\Http\Controllers\Controller;
-                use App\Models\User;
+                use App\Models\Photo;
 
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
                     public function store(Request $request): void
                     {
-                        User::firstOrCreate($request->all());
+                        Photo::firstOrCreate($request->all());
                     }
                 }
                 PHP,
@@ -328,13 +328,13 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
 
                 use Illuminate\Http\Request;
                 use App\Http\Controllers\Controller;
-                use App\Models\User;
+                use App\Models\Photo;
 
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
                     public function store(Request $request): void
                     {
-                        User::upsert($request->all(), []);
+                        Photo::upsert($request->all(), []);
                     }
                 }
                 PHP,
@@ -355,13 +355,13 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
                 <?php
                 use Illuminate\Http\Request;
                 use App\Http\Controllers\Controller;
-                use App\Models\User;
+                use App\Models\Photo;
 
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
                     public function store(Request $request): void
                     {
-                        User::where('user_id', 1)->update($request->all());
+                        Photo::where('user_id', 1)->update($request->all());
                     }
                 }
                 PHP,
@@ -382,13 +382,68 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
                 <?php
                 use Illuminate\Http\Request;
                 use App\Http\Controllers\Controller;
-                use App\Models\Post;
+                use App\Models\Photo;
 
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
                     public function update(Request $request): void
                     {
-                        POST::where('id', 1)->update($request->except(['_token']));
+                        Photo::where('id', 1)->update($request->except(['_token']));
+                    }
+                }
+                PHP,
+            [
+                new Vulnerability(
+                    __FILE__,
+                    CWE::CWE_915,
+                    'Potential mass assignment: user-controlled data is passed. Use validated input and explicit attribute mapping (fillable/guarded).
+[CWE-915: Improperly Controlled Modification of Dynamically-Determined Object Attributes] See: https://cwe.mitre.org/data/definitions/915.html',
+                    10,
+                    Severity::HIGH->value,
+                ),
+            ],
+        ];
+
+        //        yield [
+        //            <<<'PHP'
+        //                <?php
+        //                use Illuminate\Http\Request;
+        //                use App\Http\Controllers\Controller;
+        //                use App\Models\Photo;
+        //                use App\Models\User;
+        //                class PhotosController extends Controller
+        //                {
+        //                    public function store(Request $request): void
+        //                    {
+        //                        $user = User::find(2);
+        //                        $user->photos()->create($request->all());
+        //                    }
+        //                }
+        //                PHP,
+        //            [
+        //                new Vulnerability(
+        //                    __FILE__,
+        //                    CWE::CWE_915,
+        //                    'Potential mass assignment: user-controlled data is passed. Use validated input and explicit attribute mapping (fillable/guarded).
+        // [CWE-915: Improperly Controlled Modification of Dynamically-Determined Object Attributes] See: https://cwe.mitre.org/data/definitions/915.html',
+        //                    11,
+        //                    Severity::HIGH->value,
+        //                ),
+        //            ],
+        //        ];
+
+        yield [
+            <<<'PHP'
+                <?php
+                use Illuminate\Http\Request;
+                use App\Http\Controllers\Controller;
+                use App\Models\Photo;
+
+                class PhotosController extends Controller
+                {
+                    public function store(Request $request): void
+                    {
+                        Photo::create(array_merge($request->all(), ['is_public' => 0]));
                     }
                 }
                 PHP,
@@ -409,68 +464,13 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
                 <?php
                 use Illuminate\Http\Request;
                 use App\Http\Controllers\Controller;
-                use App\Models\User;
+                use App\Models\Photo;
 
-                class UsersController extends Controller
-                {
-                    public function store(Request $request): void
-                    {
-                        $user = User::find(2);
-                        $user->posts()->create($request->all());
-                    }
-                }
-                PHP,
-            [
-                new Vulnerability(
-                    __FILE__,
-                    CWE::CWE_915,
-                    'Potential mass assignment: user-controlled data is passed. Use validated input and explicit attribute mapping (fillable/guarded).
-[CWE-915: Improperly Controlled Modification of Dynamically-Determined Object Attributes] See: https://cwe.mitre.org/data/definitions/915.html',
-                    11,
-                    Severity::HIGH->value,
-                ),
-            ],
-        ];
-
-        yield [
-            <<<'PHP'
-                <?php
-                use Illuminate\Http\Request;
-                use App\Http\Controllers\Controller;
-                use App\Models\User;
-
-                class UsersController extends Controller
-                {
-                    public function store(Request $request): void
-                    {
-                        User::create(array_merge($request->all(), ['role' => 'user']));
-                    }
-                }
-                PHP,
-            [
-                new Vulnerability(
-                    __FILE__,
-                    CWE::CWE_915,
-                    'Potential mass assignment: user-controlled data is passed. Use validated input and explicit attribute mapping (fillable/guarded).
-[CWE-915: Improperly Controlled Modification of Dynamically-Determined Object Attributes] See: https://cwe.mitre.org/data/definitions/915.html',
-                    10,
-                    Severity::HIGH->value,
-                ),
-            ],
-        ];
-
-        yield [
-            <<<'PHP'
-                <?php
-                use Illuminate\Http\Request;
-                use App\Http\Controllers\Controller;
-                use App\Models\User;
-
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
                     public function upsert(Request $request): void
                     {
-                        User::updateOrCreate(['email' => request()->input('email')], $request->except(['_token']));
+                        Photo::updateOrCreate(['path' => request()->input('path')], $request->except(['_token']));
                     }
                 }
                 PHP,
@@ -491,13 +491,13 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
                 <?php
                 use Illuminate\Http\Request;
                 use App\Http\Controllers\Controller;
-                use App\Models\User;
+                use App\Models\Photo;
 
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
                     public function store(): void
                     {
-                        User::upsert(request()->all(), ['email'], ['name','status']);
+                        Photo::upsert(request()->all(), ['path'], ['title','is_public']);
                     }
                 }
                 PHP,
@@ -518,14 +518,14 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
                 <?php
                 use Illuminate\Http\Request;
                 use App\Http\Controllers\Controller;
-                use App\Models\User;
+                use App\Models\Photo;
 
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
                     public function update(Request $request): void
                     {
-                        $user = User::find(1);
-                        $user->fill($request->only(['name','email']))->save();
+                        $photo = Photo::find(1);
+                        $photo->fill($request->only(['title','path']))->save();
                     }
                 }
                 PHP,
@@ -546,14 +546,14 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
                 <?php
                 use Illuminate\Http\Request;
                 use App\Http\Controllers\Controller;
-                use App\Models\User;
+                use App\Models\Photo;
 
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
                     public function update(Request $request): void
                     {
-                        $user = User::find(1);
-                        $user->forceFill($request->all())->save();
+                        $photo = Photo::find(1);
+                        $photo->forceFill($request->all())->save();
                     }
                 }
                 PHP,
@@ -574,13 +574,40 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
                 <?php
                 use Illuminate\Http\Request;
                 use App\Http\Controllers\Controller;
-                use App\Models\User;
+                use App\Models\Photo;
 
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
                     public function update(Request $request): void
                     {
-                        User::where('id', 1)->update($request->input());
+                        Photo::where('id', 1)->update($request->input());
+                    }
+                }
+                PHP,
+            [
+                new Vulnerability(
+                    __FILE__,
+                    CWE::CWE_915,
+                    'Potential mass assignment: user-controlled data is passed. Use validated input and explicit attribute mapping (fillable/guarded).
+[CWE-915: Improperly Controlled Modification of Dynamically-Determined Object Attributes] See: https://cwe.mitre.org/data/definitions/915.html',
+                    10,
+                    Severity::HIGH->value,
+                ),
+            ],
+        ];
+
+        yield 'model_with_fillable_*' => [
+            <<<'PHP'
+                <?php
+                use Illuminate\Http\Request;
+                use App\Http\Controllers\Controller;
+                use App\Models\PhotoUnsafe;
+
+                class PhotosController extends Controller
+                {
+                    public function update(Request $request): void
+                    {
+                        PhotoUnsafe::where('id', 1)->update($request->input());
                     }
                 }
                 PHP,
@@ -601,14 +628,14 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
                 <?php
                 use Illuminate\Http\Request;
                 use App\Http\Controllers\Controller;
-                use App\Models\User;
+                use App\Models\Photo;
 
-                class UsersController extends Controller
+                class PhotosController extends Controller
                 {
                     public function update(Request $request): void
                     {
-                        $user = User::find(1);
-                        $user->forceFill($request->json()->all())->save();
+                        $photo = Photo::find(1);
+                        $photo->forceFill($request->json()->all())->save();
                     }
                 }
                 PHP,
@@ -621,6 +648,30 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
                     11,
                     Severity::HIGH->value,
                 ),
+            ],
+        ];
+
+        yield [
+            <<<'PHP'
+                <?php
+
+                declare(strict_types=1);
+
+                namespace App\HttpControllers;
+
+                use Illuminate\Http\Request;
+                use App\Http\Controllers\Controller;
+                use App\Models\Photo;
+
+                class PhotosController extends Controller
+                {
+                    public function update(Request $request): void
+                    {
+                         Photo::where('id', $request->get('id'))->update(['title' => $request->get('title')]);
+                    }
+                }
+                PHP,
+            [
             ],
         ];
 

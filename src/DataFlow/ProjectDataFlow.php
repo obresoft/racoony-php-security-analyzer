@@ -7,4 +7,6 @@ namespace Obresoft\Racoony\DataFlow;
 interface ProjectDataFlow
 {
     public function getClassData(string $classFqcn): ?ClassDataDto;
+
+    public function getClassByTable(string $tableName): ?ClassDataDto;
 }

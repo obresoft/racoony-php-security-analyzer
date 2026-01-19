@@ -13,7 +13,27 @@ use function in_array;
 
 final class LaravelDBFacadeAnalyzer extends BaseAnalyzer implements AnalyzerInterface
 {
-    private const array DB_FACADE_CLASSES = ['Illuminate\Support\Facades\DB'];
+    public const array DATA_SINK_METHODS = [
+        'get',
+        'all',
+        'first',
+        'firstorfail',
+        'sole',
+        'find',
+        'findorfail',
+        'pluck',
+        'value',
+        'paginate',
+        'simplepaginate',
+        'cursorpaginate',
+        'cursor',
+        'lazy',
+    ];
+
+    private const array DB_FACADE_CLASSES = [
+        'Illuminate\Support\Facades\DB',
+        'DB',
+    ];
 
     public function __construct(
         private readonly ?ClassNameResolver $classNameResolver,
@@ -27,6 +47,27 @@ final class LaravelDBFacadeAnalyzer extends BaseAnalyzer implements AnalyzerInte
         }
 
         $leftmostReceiverNode = $this->scope->findLeftmostReceiver();
+
+        if ($this->scope->withNode($leftmostReceiverNode)->isVariable()) {
+            $receiverVariableName = $this->scope->withNode($leftmostReceiverNode)->getVariableName();
+            if (null === $receiverVariableName || '' === $receiverVariableName) {
+                return false;
+            }
+
+            foreach ($this->scope->withNode($leftmostReceiverNode)->analyzeVariable($receiverVariableName) as $variableFact) {
+                $factScope = $variableFact->scope ?? null;
+                if (null === $factScope) {
+                    continue;
+                }
+
+                if (in_array($variableFact->nameOrValue, self::DB_FACADE_CLASSES, true)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         $receiverClassShortName = $this->scope->withNode($leftmostReceiverNode)->classAsString() ?? '';
 
         if ('' === $receiverClassShortName) {
@@ -40,5 +81,35 @@ final class LaravelDBFacadeAnalyzer extends BaseAnalyzer implements AnalyzerInte
         }
 
         return in_array($resolvedFullyQualifiedClassName, self::DB_FACADE_CLASSES, true);
+    }
+
+    public function findDataReadScope(): ?Scope
+    {
+        $selects = [
+            'select',
+            'addselect',
+            'selectraw',
+            'value',
+            'pluck',
+            'count',
+            'min',
+            'max',
+            'avg',
+            'sum',
+        ];
+
+        foreach ($selects as $select) {
+            $scope = $this->scope->callChainAnalyzer()->findLastMethodCallScope($select);
+            if (null !== $scope) {
+                return $scope;
+            }
+        }
+
+        return null;
+    }
+
+    public function findTableScope(): ?Scope
+    {
+        return $this->scope->callChainAnalyzer()->findLastMethodCallScope('table');
     }
 }

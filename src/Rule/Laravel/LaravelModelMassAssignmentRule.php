@@ -12,13 +12,6 @@ use Obresoft\Racoony\Insight\Insight;
 use Obresoft\Racoony\Rule\AbstractRule;
 use Obresoft\Racoony\Rule\Rule;
 
-/**
- * CWE-915:Improperly Controlled Modification of Dynamically-Determined Object Attributes
- * The product receives input from an upstream component that specifies multiple attributes, properties,
- * or fields that are to be initialized or updated in an object, but it does not properly control which attributes can be modified.
- * @see https://cwe.mitre.org/data/definitions/915.html
- * Also @see https://cheatsheetseries.owasp.org/cheatsheets/Laravel_Cheat_Sheet.html#mass-assignment
- */
 #[CWE('915', 'Improperly Controlled Modification of Dynamically-Determined Object Attributes', 'https://cwe.mitre.org/data/definitions/915.html')]
 final class LaravelModelMassAssignmentRule extends AbstractRule implements Rule
 {
@@ -30,7 +23,7 @@ final class LaravelModelMassAssignmentRule extends AbstractRule implements Rule
 
         $model = $context->analyzerResolver->get(LaravelModelAnalyzer::class);
 
-        if (!$model->isLaravelModel()) {
+        if (!$model->isLaravelModelFromClassNode()) {
             return null;
         }
 
@@ -38,6 +31,15 @@ final class LaravelModelMassAssignmentRule extends AbstractRule implements Rule
             return $this->createInsight(
                 CWE::CWE_915,
                 'Model allows mass assignment: `$guarded = []` without a `$fillable` whitelist.',
+                0,
+                Severity::HIGH->value,
+            );
+        }
+
+        if ($model->fillableHasWildcardSelection()) {
+            return $this->createInsight(
+                CWE::CWE_915,
+                'Model allows mass assignment: `$fillable` contains wildcard selection (`*` or `table.*`) enabling assignment of all attributes.',
                 0,
                 Severity::HIGH->value,
             );

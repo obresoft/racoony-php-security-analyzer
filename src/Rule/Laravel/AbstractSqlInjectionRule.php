@@ -16,6 +16,8 @@ use Obresoft\Racoony\Rule\AbstractRule;
 use Obresoft\Racoony\Rule\Rule;
 
 use function in_array;
+use function sprintf;
+use function strtolower;
 
 abstract class AbstractSqlInjectionRule extends AbstractRule implements Rule
 {
@@ -50,7 +52,8 @@ abstract class AbstractSqlInjectionRule extends AbstractRule implements Rule
         'joinsub',
     ];
 
-    private const string MESSAGE = 'User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).';
+    private const string MESSAGE =
+        'User input from %s flows into %s as SQL identifier%s. Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).';
 
     final public function check(AnalysisContext $context): ?array
     {
@@ -69,14 +72,15 @@ abstract class AbstractSqlInjectionRule extends AbstractRule implements Rule
         $modelAnalyzer = $context->analyzerResolver->get(LaravelModelAnalyzer::class);
         $dbFacadeAnalyzer = $context->analyzerResolver->get(LaravelDBFacadeAnalyzer::class);
 
-        if (!$modelAnalyzer->isLaravelModel() && !$dbFacadeAnalyzer->isDBFacade()) {
+        if (!$modelAnalyzer->isLaravelModelFromClassNode() && !$dbFacadeAnalyzer->isDBFacade()) {
             return null;
         }
 
         $collectedInsights = [];
+
         foreach ($scope->callAnalyzer()->argScopes() as $argumentScope) {
             foreach ($scope->withNode($argumentScope->node())->decomposeArgumentIntoPartScopes() as $partScope) {
-                $insight = $this->analyzeScopes($scope, $partScope, $context);
+                $insight = $this->analyzeScopes($scope, $partScope, $context, $methodName);
                 if ($insight instanceof Insight) {
                     $collectedInsights[] = $insight;
                 }
@@ -88,20 +92,45 @@ abstract class AbstractSqlInjectionRule extends AbstractRule implements Rule
 
     abstract protected function methodsToCheck(): array;
 
-    private function analyzeScopes(Scope $scope, Scope $argScope, AnalysisContext $context): ?Insight
-    {
-        if (!$argScope->isVariable() || $argScope->callAnalyzer()->isCallLike()) {
-            return null;
+    private function analyzeScopes(
+        Scope $scope,
+        Scope $argScope,
+        AnalysisContext $context,
+        string $sinkMethod,
+    ): ?Insight {
+        $requestCallAnalyzer = $context->analyzerResolver->get(LaravelRequestCallAnalyzer::class);
+
+        if ($argScope->callAnalyzer()->isCallLike()
+            && $requestCallAnalyzer->withScope($argScope)->isRequestMethodCall()
+        ) {
+            $source = 'Request::' . ($argScope->callAnalyzer()->calleeName() ?? 'unknown') . '()';
+
+            return $this->report(
+                $scope->getLine(),
+                $sinkMethod,
+                $source,
+                null,
+            );
         }
 
-        $requestCallAnalyzer = $context->analyzerResolver->get(LaravelRequestCallAnalyzer::class);
         if ($argScope->isVariable()) {
-            $var = $scope->analyzeVariable($argScope->getVariableName());
+            $variableName = $argScope->getVariableName();
+            $variable = $scope->analyzeVariable($variableName);
 
-            foreach ($var as $varValue) {
+            foreach ($variable as $varValue) {
                 $variableScope = $varValue->scope;
-                if ($variableScope->callAnalyzer()->isMethodCall() && $requestCallAnalyzer->withScope($variableScope)->isRequestMethodCall()) {
-                    return $this->report($scope->getLine());
+
+                if ($variableScope->callAnalyzer()->isMethodCall()
+                    && $requestCallAnalyzer->withScope($variableScope)->isRequestMethodCall()
+                ) {
+                    $source = 'Request::' . ($variableScope->callAnalyzer()->calleeName() ?? 'unknown') . '()';
+
+                    return $this->report(
+                        $scope->getLine(),
+                        $sinkMethod,
+                        $source,
+                        '$' . $variableName,
+                    );
                 }
             }
         }
@@ -109,11 +138,20 @@ abstract class AbstractSqlInjectionRule extends AbstractRule implements Rule
         return null;
     }
 
-    private function report(int $line): Insight
-    {
+    private function report(
+        int $line,
+        string $sinkMethod,
+        string $source,
+        ?string $variable,
+    ): Insight {
         return $this->createInsight(
             CWE::CWE_89,
-            self::MESSAGE,
+            sprintf(
+                self::MESSAGE,
+                $source,
+                $sinkMethod . '()',
+                null !== $variable ? ' (variable: ' . $variable . ')' : ' (direct argument)',
+            ),
             $line,
             Severity::HIGH->value,
         );

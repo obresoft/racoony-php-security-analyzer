@@ -10,17 +10,20 @@ use Obresoft\Racoony\Analyzer\Scope;
 use Obresoft\Racoony\DataFlow\ClassDataDto;
 use Obresoft\Racoony\DataFlow\ProjectDataFlowIndex;
 use Obresoft\Racoony\Resolver\ClassNameResolver;
-use PhpParser\Node\Expr\Array_;
-use PhpParser\Node\Scalar\String_;
+use Obresoft\Racoony\Support\SelectorHelper;
 use PhpParser\Node\Stmt\Class_;
-use PhpParser\Node\Stmt\Property;
 use RuntimeException;
 
+use function array_key_exists;
 use function in_array;
+use function is_array;
 
 final class LaravelModelAnalyzer extends BaseAnalyzer implements AnalyzerInterface
 {
-    private const array LARAVEL_MODEL_CLASS = ['Illuminate\Database\Eloquent\Model', 'Illuminate\Foundation\Auth\User'];
+    private const array LARAVEL_MODEL_CLASS = [
+        'Illuminate\Database\Eloquent\Model',
+        'Illuminate\Foundation\Auth\User',
+    ];
 
     /** @var list<string> */
     private const array STATIC_SINK_METHODS = [
@@ -42,7 +45,7 @@ final class LaravelModelAnalyzer extends BaseAnalyzer implements AnalyzerInterfa
         public ?ProjectDataFlowIndex $projectDataFlowIndex = null,
     ) {}
 
-    public function isLaravelModel(): bool
+    public function isLaravelModelFromClassNode(): bool
     {
         $scope = $this->scope;
         $node = $scope->node();
@@ -69,175 +72,77 @@ final class LaravelModelAnalyzer extends BaseAnalyzer implements AnalyzerInterfa
         return in_array($resolvedParent, self::LARAVEL_MODEL_CLASS, true);
     }
 
-    public function hasFillable(): bool
+    public function hasProperty(string $propertyName): bool
     {
-        $node = $this->scope->node();
-        if (!$node instanceof Class_) {
-            return false;
-        }
-
-        foreach ($node->stmts as $stmt) {
-            if ($stmt instanceof Property) {
-                foreach ($stmt->props as $prop) {
-                    if ('fillable' === $prop->name->toString()) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
+        return null !== $this->getPropertyValue($propertyName);
     }
 
-    public function hasGuarded(): bool
+    public function getPropertyValue(string $propertyName): mixed
     {
-        $node = $this->scope->node();
-        if (!$node instanceof Class_) {
+        $classData = $this->resolveCurrentClassData();
+
+        if (null === $classData) {
+            return null;
+        }
+
+        if (!array_key_exists($propertyName, $classData->properties)) {
+            return null;
+        }
+
+        return $classData->properties[$propertyName] ?? null;
+    }
+
+    public function hasFillable(): bool
+    {
+        if (!$this->scope->isClassCall()) {
             return false;
         }
 
-        foreach ($node->stmts as $stmt) {
-            if ($stmt instanceof Property) {
-                foreach ($stmt->props as $prop) {
-                    if ('guarded' === $prop->name->toString()) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
+        return $this->hasProperty('fillable');
     }
 
     public function guardedIsEmptyArray(): bool
     {
-        $array = $this->guardedArrayItems();
-
-        return $array instanceof Array_ && [] === $array->items;
+        return [] === $this->getPropertyValue('guarded');
     }
 
-    public function guardedArrayItems(): ?Array_
+    public function hasMassAssignmentProtection(): bool
     {
-        $node = $this->scope->node();
-        if (!$node instanceof Class_) {
-            return null;
+        $guarded = $this->getPropertyValue('guarded');
+
+        if (is_array($guarded) && [] !== $guarded) {
+            return true;
         }
 
-        foreach ($node->stmts as $stmt) {
-            if ($stmt instanceof Property) {
-                foreach ($stmt->props as $prop) {
-                    if ('guarded' !== $prop->name->toString()) {
-                        continue;
-                    }
+        $fillable = $this->getPropertyValue('fillable');
 
-                    $default = $prop->default;
-                    if ($default instanceof Array_) {
-                        return $default;
-                    }
-
-                    return null;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    public function hasFillableOrGuarded(): bool
-    {
-        $node = $this->scope->node();
-        if (!$node instanceof Class_) {
+        if (null === $fillable) {
             return false;
         }
 
-        foreach ($node->stmts as $stmt) {
-            if ($stmt instanceof Property) {
-                foreach ($stmt->props as $prop) {
-                    if ('fillable' === $prop->name->toString()) {
-                        return true;
-                    }
-
-                    if ('guarded' === $prop->name->toString()) {
-                        $default = $prop->default;
-
-                        if ($default instanceof Array_ && [] !== $default->items) {
-                            return true;
-                        }
-
-                        if ($default instanceof Array_) {
-                            foreach ($default->items as $item) {
-                                if ($item->value instanceof String_ && '*' === $item->value->value) {
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        if ([] === $fillable) {
+            return true;
         }
 
-        return false;
+        return is_array($fillable) && !SelectorHelper::containsWildcardSelection($fillable);
     }
 
-    public function getFillableLine(): ?int
+    public function fillableHasWildcardSelection(): bool
     {
-        $node = $this->scope->node();
-        if (!$node instanceof Class_) {
-            return null;
-        }
+        $fillable = $this->getPropertyValue('fillable');
 
-        foreach ($node->stmts as $stmt) {
-            if ($stmt instanceof Property) {
-                foreach ($stmt->props as $prop) {
-                    if ('fillable' === $prop->name->toString()) {
-                        return $prop->getStartLine();
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
-    public function getGuardedLine(): ?int
-    {
-        $node = $this->scope->node();
-        if (!$node instanceof Class_) {
-            return null;
-        }
-
-        foreach ($node->stmts as $stmt) {
-            if ($stmt instanceof Property) {
-                foreach ($stmt->props as $prop) {
-                    if ('guarded' === $prop->name->toString()) {
-                        return $prop->getStartLine();
-                    }
-                }
-            }
-        }
-
-        return null;
+        return is_array($fillable) && SelectorHelper::containsWildcardSelection($fillable);
     }
 
     public function isModelClass(): bool
     {
-        $literalClass = $this->scope->classAsString();
-        $resolvedClass = null !== $literalClass
-            ? $this->resolver->resolveClassName($literalClass)
-            : $this->scope->resolveReceiverClass($this->resolver);
+        $classData = $this->resolveCurrentClassData();
 
-        if (null === $resolvedClass) {
+        if (!$classData instanceof ClassDataDto) {
             return false;
         }
 
-        $className = $this->resolver->resolveClassName($resolvedClass);
-        $findClassData = $this->projectDataFlowIndex->getClassData($className);
-
-        if (!$findClassData instanceof ClassDataDto) {
-            return false;
-        }
-
-        return in_array($findClassData->parentClass, self::LARAVEL_MODEL_CLASS, true);
+        return in_array($classData->parentClass, self::LARAVEL_MODEL_CLASS, true);
     }
 
     public function isModelWriteMethodCall(): bool
@@ -249,5 +154,21 @@ final class LaravelModelAnalyzer extends BaseAnalyzer implements AnalyzerInterfa
         $methodNameCall = $this->scope->nameAsString();
 
         return in_array(mb_strtolower((string)$methodNameCall), self::STATIC_SINK_METHODS, true);
+    }
+
+    private function resolveCurrentClassData(): ?ClassDataDto
+    {
+        $literalClass = $this->scope->classAsString();
+        $resolvedClass = null !== $literalClass
+            ? $this->resolver->resolveClassName($literalClass)
+            : $this->scope->resolveReceiverClass($this->resolver);
+
+        if (null === $resolvedClass) {
+            return null;
+        }
+
+        $className = $this->resolver->resolveClassName($resolvedClass);
+
+        return $this->projectDataFlowIndex->getClassData($className);
     }
 }

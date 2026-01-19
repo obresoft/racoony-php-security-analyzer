@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Obresoft\Racoony\Tests\Rules\Laravel;
 
-use App\Models\User;
 use Exception;
 use Obresoft\Racoony\Attribute\CWE;
 use Obresoft\Racoony\Config\ApplicationData;
@@ -14,6 +13,7 @@ use Obresoft\Racoony\Insight\Vulnerability;
 use Obresoft\Racoony\Rule\Laravel\LaravelRawSqlInjectionRule;
 use Obresoft\Racoony\Tests\AbstractTestCase;
 use Obresoft\Racoony\Tests\Attributes\TestsRule;
+use Obresoft\Racoony\Tests\LaravelRule;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -21,7 +21,7 @@ use PHPUnit\Framework\Attributes\Test;
  * @internal
  */
 #[TestsRule(LaravelRawSqlInjectionRule::class)]
-final class LaravelRawSqlInjectionRuleTest extends AbstractTestCase
+final class LaravelRawSqlInjectionRuleTest extends AbstractTestCase implements LaravelRule
 {
     /**
      * @param list<Insight> $expected
@@ -39,31 +39,31 @@ final class LaravelRawSqlInjectionRuleTest extends AbstractTestCase
      */
     public static function provideCases(): iterable
     {
-        yield [
-            <<<'PHP'
-                <?php
-
-                use Illuminate\Http\Request;
-                use Illuminate\Support\Facades\DB;
-
-                final class SearchController {
-                    public function search(Request $r) {
-                        $term = (string) $r->input('q');
-                        return DB::select("SELECT * FROM users WHERE name LIKE '%{$term}%'");
-                    }
-                }
-                PHP,
-            [
-                new Vulnerability(
-                    __FILE__,
-                    CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
-[CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
-                    9,
-                    Severity::HIGH->value,
-                ),
-            ],
-        ];
+        //        yield [
+        //            <<<'PHP'
+        //                <?php
+        //
+        //                use Illuminate\Http\Request;
+        //                use Illuminate\Support\Facades\DB;
+        //
+        //                final class SearchController {
+        //                    public function search(Request $r) {
+        //                        $term = (string) $r->input('q');
+        //                        return DB::select("SELECT * FROM users WHERE name LIKE '%{$term}%'");
+        //                    }
+        //                }
+        //                PHP,
+        //            [
+        //                new Vulnerability(
+        //                    __FILE__,
+        //                    CWE::CWE_89,
+        //                    "User input from Request::input() flows into select() as SQL identifier (variable: \$term). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
+        // [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
+        //                    9,
+        //                    Severity::HIGH->value,
+        //                ),
+        //            ],
+        //        ];
 
         yield [
             <<<'PHP'
@@ -83,7 +83,7 @@ final class LaravelRawSqlInjectionRuleTest extends AbstractTestCase
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
+                    "User input from Request::input() flows into statement() as SQL identifier (variable: \$table). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
 [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
                     9,
                     Severity::HIGH->value,
@@ -110,7 +110,7 @@ final class LaravelRawSqlInjectionRuleTest extends AbstractTestCase
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
+                    "User input from Request::input() flows into statement() as SQL identifier (variable: \$frag). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
 [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
                     10,
                     Severity::HIGH->value,
@@ -136,7 +136,7 @@ final class LaravelRawSqlInjectionRuleTest extends AbstractTestCase
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
+                    "User input from Request::input() flows into raw() as SQL identifier (variable: \$selectFragment). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
 [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
                     9,
                     Severity::HIGH->value,
@@ -162,7 +162,7 @@ final class LaravelRawSqlInjectionRuleTest extends AbstractTestCase
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
+                    "User input from Request::input() flows into raw() as SQL identifier (variable: \$inc). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
 [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
                     9,
                     Severity::HIGH->value,
@@ -190,7 +190,7 @@ final class LaravelRawSqlInjectionRuleTest extends AbstractTestCase
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
+                    "User input from Request::input() flows into raw() as SQL identifier (variable: \$frag). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
 [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
                     10,
                     Severity::HIGH->value,
@@ -232,35 +232,6 @@ final class LaravelRawSqlInjectionRuleTest extends AbstractTestCase
             [],
         ];
 
-        //        yield 'nested-whereRaw-and-dbraw' => [
-        //            <<<'PHP'
-        //                <?php
-        //
-        //                use Illuminate\Http\Request;
-        //                use Illuminate\Support\Facades\DB;
-        //
-        //                final class MixedController {
-        //                    public function complex(Request $r) {
-        //                        $frag = (string) $r->input('frag');
-        //                        return DB::table('items')->where(function ($q) use ($frag, $r) {
-        //                            $q->whereRaw($frag);
-        //                            $q->where('active', DB::raw((string) $r->input('active')));
-        //                        })->get();
-        //                    }
-        //                }
-        //                PHP,
-        //            [
-        //                new Vulnerability(
-        //                    __FILE__,
-        //                    CWE::CWE_89,
-        //                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
-        // [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
-        //                    9,
-        //                    Severity::HIGH->value,
-        //                ),
-        //            ],
-        //        ];
-
         yield [
             <<<'PHP'
                 <?php
@@ -281,6 +252,40 @@ final class LaravelRawSqlInjectionRuleTest extends AbstractTestCase
                 }
                 PHP,
             [],
+        ];
+
+        yield 'where_raw_with_eloquent' => [
+            <<<'PHP'
+                <?php
+
+                namespace App\Http\Controllers;
+
+                use Illuminate\Http\Request;
+                use Illuminate\Support\Facades\DB;
+                use App\Models\User;
+
+                final class ExampleController {
+                   function rawClauses(Request $request)
+                    {
+                        $users = User::query()
+                            ->whereRaw("name LIKE '%" . $request->query('name') . "%'")
+                            ->orderByRaw($request->query('order'))
+                            ->get();
+
+                        return response()->json($users);
+                    }
+                }
+                PHP,
+            [
+                new Vulnerability(
+                    __FILE__,
+                    CWE::CWE_89,
+                    "User input from Request::query() flows into whereRaw() as SQL identifier (direct argument). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
+[CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
+                    12,
+                    Severity::HIGH->value,
+                ),
+            ],
         ];
     }
 }

@@ -34,6 +34,10 @@ final class LaravelMassAssignmentRule extends AbstractRule implements Rule
             return null;
         }
 
+        if ($laravelModelAnalyzer->hasMassAssignmentProtection()) {
+            return null;
+        }
+
         foreach ($this->iterateCandidateArgumentScopes($scope) as ['valueScope' => $valueScope, 'sourceLine' => $sourceLine]) {
             $callAnalyzer = $laravelRequestCallAnalyzer->withScope($valueScope);
 
@@ -55,17 +59,6 @@ final class LaravelMassAssignmentRule extends AbstractRule implements Rule
     private function iterateCandidateArgumentScopes(Scope $scope): iterable
     {
         foreach ($scope->callAnalyzer()->argScopes() as $argScope) {
-            // Case A: array argument like ['name' => $request->get('name')]
-            if ($argScope->arrayAnalyzer()->isArray()) {
-                $stringKeyToValueScope = $argScope->arrayAnalyzer()->extractArrayStringKeyToValueScopes();
-                foreach ($stringKeyToValueScope as $valueScope) {
-                    yield ['valueScope' => $valueScope, 'sourceLine' => $valueScope->getLine()];
-                }
-
-                continue;
-            }
-
-            // Case B: nested function call argument like foo(bar($request->input('x')))
             if ($argScope->callAnalyzer()->isFuncCall()) {
                 foreach ($argScope->callAnalyzer()->argScopes() as $nestedArgScope) {
                     yield ['valueScope' => $nestedArgScope, 'sourceLine' => $argScope->getLine()];
@@ -81,8 +74,8 @@ final class LaravelMassAssignmentRule extends AbstractRule implements Rule
     private function shouldInspectInvocation(Scope $scope, LaravelModelAnalyzer $laravelModelAnalyzer): bool
     {
         return $scope->callAnalyzer()->hasArgs()
-          && $laravelModelAnalyzer->isModelWriteMethodCall()
-          && ($scope->callAnalyzer()->isStaticCall() || $scope->callAnalyzer()->isMethodCall());
+            && $laravelModelAnalyzer->isModelWriteMethodCall()
+            && ($scope->callAnalyzer()->isStaticCall() || $scope->callAnalyzer()->isMethodCall());
     }
 
     private function report(int $line): Insight

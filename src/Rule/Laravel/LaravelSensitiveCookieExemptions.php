@@ -121,7 +121,7 @@ final class LaravelSensitiveCookieExemptions extends AbstractRule implements Rul
     public function checkLaravelGraterThan10(AnalysisContext $context): ?array
     {
         $scope = $context->scope;
-        if (!str_contains($this->file, 'bootstrap/app.php')) {
+        if (!str_contains($this->filePath, 'bootstrap/app.php')) {
             return null;
         }
 

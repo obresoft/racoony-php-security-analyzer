@@ -10,12 +10,16 @@ use Obresoft\Racoony\Command\Reporting\JsonReport;
 use Obresoft\Racoony\Command\Reporting\ReportBuilder;
 use Obresoft\Racoony\Command\Reporting\TableReport;
 use Obresoft\Racoony\Config\Config;
+use Obresoft\Racoony\DataFlow\ProjectDataFlowBuilderFactory;
 use Obresoft\Racoony\FileReader;
 use Obresoft\Racoony\ScanRunner;
+use SplFileInfo;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Finder\Finder;
 
@@ -27,7 +31,7 @@ final class ScanCommand extends Command
 {
     private const string NAME = 'scan';
 
-    private ReportBuilder $reportBuilder;
+    private readonly ReportBuilder $reportBuilder;
 
     public function __construct(private readonly Config $config)
     {
@@ -47,21 +51,59 @@ final class ScanCommand extends Command
         ));
 
         $finder = Finder::create()
-            ->in($this->config->getPath())
+            ->in($this->config->getPaths())
             ->append([__FILE__])
             ->exclude(
                 ['vendor', 'tests', 'database', 'storage', 'cache', 'samples', 'docs', 'node_modules', '.git', '.svn'],
             )
-            ->files();
+            ->files()
+            ->name('*.php');
 
-        $files = new ArrayIterator(iterator_to_array($finder));
         $scanner = ASTFileScannerFactory::create(new FileReader(), $this->config->getApplication());
 
-        $insights = (new ScanRunner(
-            $files,
-            $scanner,
-            $this->config->getRules(),
-        ))->run();
+        $builder = ProjectDataFlowBuilderFactory::create(new FileReader());
+
+        $filesArray = iterator_to_array($finder);
+        $files = new ArrayIterator($filesArray);
+        $totalFiles = count($filesArray);
+
+        $reportFormat = strtolower((string)$input->getOption('format'));
+
+        $progressOutput = $output;
+
+        if ('json' === $reportFormat && $output instanceof ConsoleOutputInterface) {
+            $progressOutput = $output->getErrorOutput();
+        }
+
+        $progressBar = null;
+        $onFileScanned = null;
+
+        if ($progressOutput->isDecorated() && $input->isInteractive()) {
+            $progressBar = new ProgressBar($progressOutput, $totalFiles);
+            $progressBar->setFormat(' %current%/%max% [%bar%] %percent:3s%%  %message%');
+            $progressBar->setMessage('Scanning files...');
+            $progressBar->start();
+
+            $onFileScanned = static function (SplFileInfo $file) use ($progressBar): void {
+                $progressBar->setMessage($file->getFilename());
+                $progressBar->advance();
+            };
+        }
+
+        try {
+            $insights = (new ScanRunner(
+                $files,
+                $scanner,
+                $this->config->getRules(),
+                $builder,
+                $onFileScanned,
+            ))->run();
+        } finally {
+            if ($progressBar instanceof ProgressBar) {
+                $progressBar->finish();
+                $progressOutput->writeln('');
+            }
+        }
 
         if ([] === $insights) {
             $output->writeln('<info>No vulnerabilities found 🎉</info>');

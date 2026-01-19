@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Obresoft\Racoony;
 
+use Closure;
 use Obresoft\Racoony\CodeScanner\ASTFileScanner;
 use Obresoft\Racoony\CodeScanner\Scanner;
 use Obresoft\Racoony\DataFlow\ProjectDataFlowBuilder;
@@ -29,6 +30,8 @@ final readonly class ScanRunner
         private iterable $fileIterator,
         private Scanner $scanner,
         private iterable $rules,
+        private ProjectDataFlowBuilder $projectDataFlowBuilder,
+        private ?Closure $onProgressTick = null,
     ) {}
 
     /** @return list<Insight> */
@@ -40,7 +43,7 @@ final readonly class ScanRunner
             ? $this->fileIterator
             : iterator_to_array($this->fileIterator);
 
-        $projectIndex = (new ProjectDataFlowBuilder())->build($filesArray);
+        $projectIndex = $this->projectDataFlowBuilder->build($filesArray);
 
         $scanner = $this->scanner;
         if ($scanner instanceof ASTFileScanner) {
@@ -48,11 +51,19 @@ final readonly class ScanRunner
         }
 
         foreach ($filesArray as $file) {
-            foreach ($this->rules as $rule) {
-                $rule = new $rule($file->getRealPath());
+            if (null !== $this->onProgressTick) {
+                ($this->onProgressTick)($file);
+            }
+
+            foreach ($this->rules as $ruleClassName) {
+                /** @var class-string<T> $ruleClassName */
+                $ruleInstance = new $ruleClassName();
+                /** @var Rule $ruleInstance */
+                $ruleInstance->setFilePath($file->getRealPath());
+
                 $insights = [
                     ...$insights,
-                    ...$scanner->scan($file->getRealPath(), $rule),
+                    ...$scanner->scan($file->getRealPath(), $ruleInstance),
                 ];
             }
         }

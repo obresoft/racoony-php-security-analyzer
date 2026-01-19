@@ -18,7 +18,6 @@ use PhpParser\NodeFinder;
 
 use function array_slice;
 use function count;
-use function is_string;
 
 final readonly class ClassNameResolver
 {
@@ -80,34 +79,6 @@ final readonly class ClassNameResolver
         return $this->findVariableTypeFromAssignment($variableName, $allNodes, $useStatements)
             ?? $this->findVariableTypeFromMethodParams($variableName, $allNodes, $useStatements)
             ?? $this->findVariableTypeFromDocBlocks($variableName, $allNodes, $useStatements);
-    }
-
-    /**
-     * Get all variable types in the given nodes.
-     *
-     * @return array<string, string> Array where key is variable name and value is full class name
-     */
-    public function getAllVariableTypes(): array
-    {
-        $allNodes = $this->allNodes;
-        $nodeFinder = new NodeFinder();
-        $variables = [];
-
-        $variableNodes = $nodeFinder->find($allNodes, static fn (Node $node) => $node instanceof Variable && is_string($node->name));
-
-        foreach ($variableNodes as $variable) {
-            /** @var Variable $variable */
-            $varName = $variable->name;
-
-            if (!isset($variables[$varName])) {
-                $type = $this->resolveVariableType($varName);
-                if ($type) {
-                    $variables[$varName] = $type;
-                }
-            }
-        }
-
-        return $variables;
     }
 
     /**

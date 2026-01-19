@@ -18,13 +18,14 @@ final class TableReport implements Report
         }
 
         $table = new Table($output);
-        $table->setHeaders(['File', 'Line', 'Severity', 'Issue'])
-            ->setColumnMaxWidth(3, 60);
+        $table
+            ->setHeaders(['File', 'Severity', 'Issue'])
+            ->setColumnMaxWidth(0, 120)
+            ->setColumnMaxWidth(2, 60);
 
         foreach ($insights as $insight) {
             $table->addRow([
-                $insight->getFile(),
-                (string)$insight->getLine(),
+                $insight->getFile() . ':' . $insight->getLine(),
                 $insight->getSeverity(),
                 $insight->getMessage(),
             ]);

@@ -23,7 +23,7 @@ abstract class AbstractRule
 
     protected ?ClassNameResolver $nameResolver = null;
 
-    public function __construct(protected readonly string $file = '') {}
+    protected string $filePath = '';
 
     final public function beforeTraverse(array $nodes): null
     {
@@ -38,6 +38,11 @@ abstract class AbstractRule
         }
 
         return null;
+    }
+
+    final public function setFilePath(string $file): void
+    {
+        $this->filePath = $file;
     }
 
     protected function beforeCheck(): ?callable
@@ -66,7 +71,7 @@ abstract class AbstractRule
 
         if (Recommendation::class === $insight) {
             return new Recommendation(
-                $this->file,
+                $this->filePath,
                 $type,
                 $message . PHP_EOL . $suffix,
                 $line,
@@ -74,7 +79,7 @@ abstract class AbstractRule
         }
 
         return new Vulnerability(
-            $this->file,
+            $this->filePath,
             $type,
             $message . PHP_EOL . $suffix,
             $line,

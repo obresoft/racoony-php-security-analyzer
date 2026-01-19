@@ -56,11 +56,25 @@ final class CodeInjectionRule extends AbstractRule implements Rule
         if ($codeExpressionScope->isVariable()) {
             foreach ($context->scope->analyzeVariable($codeExpressionScope->getVariableName()) as $factData) {
                 if ($factData->scope->concatAnalyzer()->isConcat()) {
-                    foreach ($factData->meta[0]->meta as $partFact) {
-                        if ($inputAnalyzer->isUserControlledInput($partFact->scope->node())) {
-                            $rootName = $partFact->scope->getRootVariable()->name ?? '';
+                    foreach ($factData->meta as $metaFact) {
+                        if ([] === $metaFact->meta) {
+                            continue;
+                        }
 
-                            return $this->report($node->getLine(), $usedFunctionName, $rootName);
+                        foreach ($metaFact->meta as $partFact) {
+                            if (null === $partFact?->scope) {
+                                continue;
+                            }
+
+                            if ($inputAnalyzer->isUserControlledInput($partFact->scope->node())) {
+                                $rootName = $partFact->scope->getRootVariable()->name ?? '';
+
+                                return $this->report(
+                                    $node->getLine(),
+                                    $usedFunctionName,
+                                    $rootName,
+                                );
+                            }
                         }
                     }
                 }

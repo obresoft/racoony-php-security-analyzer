@@ -14,99 +14,86 @@ use function in_array;
 
 final class RacoonyConfig implements Config
 {
-    /** @var array<string> */
-    private array $path = [];
+    /** @var list<non-empty-string> */
+    private array $paths = [];
 
-    /** @var array<class-string<Rule>> */
-    private array $rules = [];
+    /** @var Set<class-string<Rule>> */
+    private Set $rules;
+
+    /** @var Set<class-string<Rule>> */
+    private Set $removedRules;
 
     private ?ApplicationData $application = null;
 
     private Severity $failOn = Severity::LOW;
 
-    /**
-     * @param non-empty-string $path
-     */
+    public function __construct()
+    {
+        $this->rules = new Set('string');
+        $this->removedRules = new Set('string');
+    }
+
+    /** @param non-empty-string $path */
     public function setPath(string $path): self
     {
         Assert::directory($path);
-
-        $this->path[] = $path;
+        $this->paths[] = $path;
 
         return $this;
     }
 
     public function getRootPath(): string
     {
-        return $this->path[0] ?? getcwd();
+        return (string)getcwd();
     }
 
-    /** @return array<string> */
-    public function getPath(): array
+    /** @return list<non-empty-string> */
+    public function getPaths(): array
     {
-        return $this->path;
+        return $this->paths;
     }
 
+    /** @param list<"*"|class-string<Rule>> $rules */
     public function setRules(array $rules): self
     {
         if (in_array('*', $rules, true)) {
-            $this->rules = RuleSet::getPackage(RuleSet::ALL);
+            $this->addRulesToCollection($this->rules, RuleSet::getPackage(RuleSet::ALL));
 
             return $this;
         }
 
-        $newRules = new Set('string');
-        foreach ($this->rules as $rule) {
-            $newRules->add($rule);
-        }
-
-        foreach ($rules as $rule) {
-            Assert::classExists($rule);
-            Assert::isAOf($rule, Rule::class);
-            /** @var class-string<Rule> $rule */
-            $newRules->add($rule);
-        }
-
-        $this->rules = array_values($newRules->toArray());
+        $this->addRulesToCollection($this->rules, $rules);
 
         return $this;
     }
 
-    /**
-     * Set rules by package name (e.g., 'php', 'laravel', etc.).
-     *
-     * @param array<RuleSet> $packages
-     */
+    /** @param list<RuleSet> $packages */
     public function setPackageRules(array $packages): self
     {
-        /** @var Set<class-string<Rule>> $rules */
-        $rules = new Set('string');
-        foreach ($this->rules as $rule) {
-            $rules->add($rule);
-        }
-
         foreach ($packages as $package) {
             Assert::isAOf($package, RuleSet::class);
-
-            /** @var list<class-string<Rule>> $packageRules */
-            $packageRules = RuleSet::getPackage($package);
-
-            foreach ($packageRules as $rule) {
-                Assert::classExists($rule);
-                Assert::isAOf($rule, Rule::class);
-                $rules->add($rule);
-            }
+            $this->addRulesToCollection($this->rules, RuleSet::getPackage($package));
         }
-
-        $this->rules = array_values($rules->toArray());
 
         return $this;
     }
 
-    /** @return array<class-string<Rule>> */
+    /** @return list<class-string<Rule>> */
     public function getRules(): array
     {
-        return $this->rules;
+        if ($this->removedRules->isEmpty()) {
+            return array_values($this->rules->toArray());
+        }
+
+        return array_values(array_diff($this->rules->toArray(), $this->removedRules->toArray()));
+    }
+
+    /** @param list<class-string<Rule>> $rules */
+    public function removeRules(array $rules): self
+    {
+        $this->addRulesToCollection($this->removedRules, $rules);
+
+        return $this;
     }
 
     public function setApplication(ApplicationData $application): self
@@ -131,5 +118,19 @@ final class RacoonyConfig implements Config
     public function getFailOn(): Severity
     {
         return $this->failOn;
+    }
+
+    /**
+     * @param Set<class-string<Rule>> $collection
+     * @param list<class-string<Rule>> $rules
+     */
+    private function addRulesToCollection(Set $collection, array $rules): void
+    {
+        foreach ($rules as $rule) {
+            Assert::classExists($rule);
+            Assert::isAOf($rule, Rule::class);
+
+            $collection->add($rule);
+        }
     }
 }

@@ -12,6 +12,7 @@ use Obresoft\Racoony\Rule\Laravel\LaravelColumnNameSqlInjectionRule;
 use Obresoft\Racoony\Rule\Laravel\LaravelCrossSiteRequestForgeryCsrf;
 use Obresoft\Racoony\Rule\Laravel\LaravelInsecureCallableFromRequest;
 use Obresoft\Racoony\Rule\Laravel\LaravelMassAssignmentRule;
+use Obresoft\Racoony\Rule\Laravel\LaravelModelHiddenFieldsLeakageOnDbSelectRule;
 use Obresoft\Racoony\Rule\Laravel\LaravelModelMassAssignmentRule;
 use Obresoft\Racoony\Rule\Laravel\LaravelOpenRedirectRule;
 use Obresoft\Racoony\Rule\Laravel\LaravelRawSqlInjectionRule;
@@ -72,6 +73,7 @@ enum RuleSet: string
             LaravelInsecureCallableFromRequest::class,
             LaravelColumnNameSqlInjectionRule::class,
             LaravelRawSqlInjectionRule::class,
+            LaravelModelHiddenFieldsLeakageOnDbSelectRule::class,
             ...self::laravelSpatieQueryBuilder(),
         ];
     }

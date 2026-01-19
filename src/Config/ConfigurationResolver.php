@@ -17,11 +17,15 @@ final readonly class ConfigurationResolver
         $this->applicationDetector = new ApplicationDetector();
     }
 
-    public function getConfig(): RacoonyConfig
+    public function getConfig(): Config
     {
         $config = $this->getConfigFromRootPath();
 
-        if ([] === $config->getPath()) {
+        if (!$config instanceof RacoonyConfig) {
+            return $config;
+        }
+
+        if ([] === $config->getPaths()) {
             $config->setPath(getcwd());
         }
 
@@ -50,18 +54,18 @@ final readonly class ConfigurationResolver
         return $this->applicationDetector->detect($config->getRootPath());
     }
 
-    private function getConfigFromRootPath(): RacoonyConfig
+    private function getConfigFromRootPath(): Config
     {
         $configFile = getcwd() . DIRECTORY_SEPARATOR . '.racoony-config.php';
 
         if (file_exists($configFile) && is_readable($configFile)) {
-            /** @var RacoonyConfig $config */
+            /** @var Config $config */
             $config = require $configFile;
 
             return $config;
         }
 
-        /** @var RacoonyConfig $defaultConfig */
+        /** @var Config $defaultConfig */
         $defaultConfig = require __DIR__ . '/../.racoony-config.php';
 
         return $defaultConfig;
