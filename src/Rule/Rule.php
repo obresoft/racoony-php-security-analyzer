@@ -16,4 +16,6 @@ interface Rule
      * @return Insight|list<Insight>|null The insight(s) found, or null if none
      */
     public function check(AnalysisContext $context): null|array|Insight;
+
+    public function setFilePath(string $file): void;
 }

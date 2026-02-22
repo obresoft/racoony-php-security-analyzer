@@ -39,6 +39,31 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
      */
     public static function provideCases(): iterable
     {
+        yield 'orderByRaw_directly_from_request' => [
+            <<<'PHP'
+                <?php
+
+                use Illuminate\Http\Request;
+                use Illuminate\Support\Facades\DB;
+
+                final class UsersController {
+                    public function index(Request $r) {
+                        return DB::table('users')->orderByRaw($r->query('sort'))->get();
+                    }
+                }
+                PHP,
+            [
+                new Vulnerability(
+                    __FILE__,
+                    CWE::CWE_89,
+                    "User input from Request::query() flows into orderByRaw() as SQL identifier (direct argument). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
+[CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
+                    8,
+                    Severity::HIGH->value,
+                ),
+            ],
+        ];
+
         yield 'orderByRaw-from-request' => [
             <<<'PHP'
                 <?php
@@ -57,7 +82,7 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
+                    "User input from Request::query() flows into orderByRaw() as SQL identifier (variable: \$orderExpr). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
 [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
                     9,
                     Severity::HIGH->value,
@@ -83,7 +108,7 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
+                    "User input from Request::query() flows into whereRaw() as SQL identifier (variable: \$whereRaw). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
 [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
                     9,
                     Severity::HIGH->value,
@@ -109,7 +134,7 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
+                    "User input from Request::input() flows into selectRaw() as SQL identifier (variable: \$col). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
 [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
                     9,
                     Severity::HIGH->value,
@@ -126,8 +151,8 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
 
                 final class ReportsController {
                    public function report(Request $r) {
-                       $t = (string) $r->input('table');  // e.g. "admins"
-                       $c = (string) $r->input('column'); // e.g. "is_super"
+                       $t = (string) $r->input('table');
+                       $c = (string) $r->input('column');
                        return DB::table('users')->join($t, 'users.id', '=', "{$t}.{$c}")->get();
                    }
                 }
@@ -136,7 +161,7 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
+                    "User input from Request::input() flows into join() as SQL identifier (variable: \$t). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
 [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
                     10,
                     Severity::HIGH->value,
@@ -144,15 +169,7 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
-[CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
-                    10,
-                    Severity::HIGH->value,
-                ),
-                new Vulnerability(
-                    __FILE__,
-                    CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
+                    "User input from Request::input() flows into join() as SQL identifier (variable: \$c). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
 [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
                     10,
                     Severity::HIGH->value,
@@ -169,7 +186,7 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
 
                 final class UsersController {
                    public function filter(Request $r) {
-                       $col = (string) $r->query('by'); // e.g. "email"
+                       $col = (string) $r->query('by');
                        $value = (string) $r->query('q');
                        return DB::table('users')->whereRaw("{$col} = ?", [$value])->get();
                    }
@@ -179,7 +196,7 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
+                    "User input from Request::query() flows into whereRaw() as SQL identifier (variable: \$col). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
 [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
                     10,
                     Severity::HIGH->value,
@@ -187,7 +204,7 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
+                    "User input from Request::query() flows into whereRaw() as SQL identifier (variable: \$value). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
 [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
                     10,
                     Severity::HIGH->value,
@@ -204,7 +221,7 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
 
                 final class UsersController {
                    public function grouped(Request $r) {
-                       $by = (string) $r->input('group'); // e.g. "role"
+                       $by = (string) $r->input('group');
                        return DB::table('users')->groupByRaw($by)->selectRaw('count(*) as c, '.$by)->get();
                    }
                 }
@@ -213,7 +230,7 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
+                    "User input from Request::input() flows into selectRaw() as SQL identifier (variable: \$by). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
 [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
                     9,
                     Severity::HIGH->value,
@@ -221,7 +238,7 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
+                    "User input from Request::input() flows into groupByRaw() as SQL identifier (variable: \$by). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
 [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
                     9,
                     Severity::HIGH->value,
@@ -238,7 +255,7 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
 
                 final class AdminController {
                    public function debug(Request $r) {
-                       $table = (string) $r->query('t'); // e.g. "users"
+                       $table = (string) $r->query('t');
                        return DB::table($table)->limit(10)->get();
                    }
                 }
@@ -247,7 +264,7 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
+                    "User input from Request::query() flows into table() as SQL identifier (variable: \$table). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
 [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
                     9,
                     Severity::HIGH->value,
@@ -273,7 +290,7 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
+                    "User input from Request::input() flows into from() as SQL identifier (variable: \$table). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
 [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
                     9,
                     Severity::HIGH->value,
@@ -299,7 +316,7 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
+                    "User input from Request::query() flows into orderByRaw() as SQL identifier (variable: \$expr). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
 [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
                     9,
                     Severity::HIGH->value,
@@ -403,7 +420,7 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
 
                 final class ReportController {
                     public function agg(Request $r) {
-                        $cond = (string) $r->input('having'); // user provided condition
+                        $cond = (string) $r->input('having');
                         return DB::table('orders')->selectRaw('status, COUNT(*) as c')->groupBy('status')->havingRaw($cond)->get();
                     }
                 }
@@ -412,7 +429,7 @@ final class LaravelColumnNameSqlInjectionRuleTest extends AbstractTestCase imple
                 new Vulnerability(
                     __FILE__,
                     CWE::CWE_89,
-                    "User-controlled identifier (column/table/order) used in SQL context. Potential SQL Injection (CWE-89).
+                    "User input from Request::input() flows into havingRaw() as SQL identifier (variable: \$cond). Parameter binding does not sanitize identifiers. Potential SQL Injection (CWE-89).
 [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')] See: https://cwe.mitre.org/data/definitions/89.html",
                     9,
                     Severity::HIGH->value,

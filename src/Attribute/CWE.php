@@ -6,12 +6,15 @@ namespace Obresoft\Racoony\Attribute;
 
 use Attribute;
 
+/** @internal */
 #[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
 final readonly class CWE
 {
     public const string CWE_89 = 'CWE-89';
 
     public const string CWE_94 = 'CWE-94';
+
+    public const string CWE_201 = 'CWE-201';
 
     public const string CWE_601 = 'CWE-601';
 

@@ -46,7 +46,8 @@
         "nikic/php-parser": "^5.4",
         "ext-pdo": "*",
         "ramsey/collection": "^2.1",
-        "ext-zip": "*"
+        "ext-zip": "*",
+        "doctrine/inflector": "^2.1"
     },
     "require-dev": {
         "rector/rector": "^2.0",

@@ -25,7 +25,7 @@ final class Application extends BaseApplication
 
         $configResolver = new ConfigurationResolver();
         $this->config = $configResolver->getConfig();
-        $this->add(new ScanCommand($this->config));
-        $this->add(new ScanPackageCommand(new GitHubZipDownloader()));
+        $this->addCommand(new ScanCommand($this->config));
+        $this->addCommand(new ScanPackageCommand(new GitHubZipDownloader()));
     }
 }

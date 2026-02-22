@@ -10,16 +10,10 @@ use function sprintf;
 
 final class ReportBuilder
 {
-    /** @var array<string, Report> */
-    private array $reportersByFormat;
-
     /**
      * @param array<string, Report> $reportersByFormat
      */
-    public function __construct(array $reportersByFormat)
-    {
-        $this->reportersByFormat = $reportersByFormat;
-    }
+    public function __construct(private array $reportersByFormat) {}
 
     public function build(string $format): Report
     {

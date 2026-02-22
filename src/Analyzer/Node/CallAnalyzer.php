@@ -13,7 +13,6 @@ use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\NullsafeMethodCall;
 use PhpParser\Node\Expr\StaticCall;
-use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 
 use function count;
@@ -115,17 +114,6 @@ final readonly class CallAnalyzer implements AnalyzerInterface
         return $this->argExpr(0);
     }
 
-    public function namedArgExpr(string $name): ?Expr
-    {
-        foreach ($this->rawArgs() as $arg) {
-            if ($arg->name instanceof Identifier && strtolower($arg->name->toString()) === strtolower($name)) {
-                return $arg->value;
-            }
-        }
-
-        return null;
-    }
-
     /** @return iterable<Scope> */
     public function argScopes(): iterable
     {
@@ -205,20 +193,6 @@ final readonly class CallAnalyzer implements AnalyzerInterface
     {
         return $this->isMethodCall()
             && strtolower($this->scope->nameAsString() ?? '') === strtolower($method);
-    }
-
-    public function isStaticCallOf(string $class, ?string $method = null): bool
-    {
-        if (!$this->isStaticCall()) {
-            return false;
-        }
-
-        $sameClass = strtolower($this->scope->classAsString() ?? '') === strtolower($class);
-        if (!$sameClass) {
-            return false;
-        }
-
-        return null === $method || strtolower($this->scope->nameAsString() ?? '') === strtolower($method);
     }
 
     public function getCalledMethodClassName(): ?string

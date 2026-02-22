@@ -29,4 +29,4 @@ if (!$autoloadFound) {
 
 use Obresoft\Racoony\Application;
 
-(new Application())->run();
+exit((new Application())->run());

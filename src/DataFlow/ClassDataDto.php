@@ -17,5 +17,7 @@ final readonly class ClassDataDto
         public array $implementedInterfaces,
         public array $ownMethodNames,
         public array $inheritedMethods,
+        public array $properties,
+        public array $classAttributes,
     ) {}
 }

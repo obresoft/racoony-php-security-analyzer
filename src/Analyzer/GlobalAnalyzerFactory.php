@@ -143,5 +143,10 @@ final class GlobalAnalyzerFactory implements AnalyzerFactory
             LaravelSpatieQueryBuilderAnalyzer::class,
             static fn (Scope $scope, ?ClassNameResolver $resolver) => new LaravelSpatieQueryBuilderAnalyzer($scope, $resolver),
         );
+
+        $this->register(
+            CallChainAnalyzer::class,
+            static fn (Scope $scope, ?ClassNameResolver $resolver) => new CallChainAnalyzer($scope),
+        );
     }
 }

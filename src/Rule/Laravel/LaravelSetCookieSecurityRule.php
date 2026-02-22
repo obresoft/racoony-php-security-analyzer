@@ -42,7 +42,7 @@ final class LaravelSetCookieSecurityRule extends AbstractRule implements Rule
 {
     public function check(AnalysisContext $context): ?Insight
     {
-        if (!str_contains($this->file, 'config/session.php')) {
+        if (!str_contains($this->filePath, 'config/session.php')) {
             return null;
         }
 

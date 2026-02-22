@@ -65,16 +65,6 @@ final class FileIndex
         return $this->parameterTypesByVariable[$variableName] ?? [];
     }
 
-    public function findFunction(string $name): ?Function_
-    {
-        return $this->functionByName[$name] ?? null;
-    }
-
-    public function parentOf(Node $node): ?Node
-    {
-        return $this->parent[$node] ?? null;
-    }
-
     private function build(): void
     {
         $walk = function (Node $node) use (&$walk): void {

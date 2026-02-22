@@ -1,5 +1,9 @@
 # CWE-502: Deserialization of Untrusted Data
 
+## Rule implementation overview
+
+This rule is implemented by the ```UnserializeOnUntrustedDataRule::class```.
+
 ## Summary
 
 This rule detects unsafe usage of PHP `unserialize()` on **untrusted or user-controlled data**.
@@ -9,6 +13,32 @@ restores their internal state, and may automatically trigger object lifecycle me
 When attacker-controlled input reaches `unserialize()`, this behavior can lead to
 **PHP Object Injection** and severe security risks.
 
+## Supported taint sources
+
+The rule treats the following as untrusted sources:
+
+PHP superglobals:
+$_GET, $_POST, $_COOKIE, $_REQUEST, $_SERVER
+
+Laravel request helpers and abstractions:
+
+request()->input()
+
+$request->input()
+
+request()->cookie()
+
+```php
+$payloadFromUser = $_GET['data'];
+unserialize($payloadFromUser);
+
+```
+or
+```php
+$payloadFromUser = $request->input('payload');
+unserialize($payloadFromUser);
+
+```
 ---
 
 ## Why this is a problem
@@ -27,7 +57,7 @@ The attacker abuses **existing code paths and side effects**.
 
 ---
 
-### Illustrative example (simplified)
+## Illustrative example (simplified)
 ```php
 final class MessageFormatter
 {
@@ -69,3 +99,14 @@ triggering file IO without an explicit method call.
 
 This demonstrates how object lifecycle + side effects
 can be abused when deserialization is attacker-controlled.
+
+
+## Full implementation and tests
+
+The complete rule implementation and exhaustive test coverage are available here:
+
+Rule class:
+```src/Rule/PHP/UnserializeOnUntrustedDataRule.php```
+
+Test suite (PHP & Laravel cases):
+```tests/Rules/PHP/UnserializeOnUntrustedDataRuleTest.php```

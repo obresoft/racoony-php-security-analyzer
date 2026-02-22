@@ -9,22 +9,13 @@ use Obresoft\Racoony\Rule\Rule;
 
 interface Config
 {
-    public function setPath(string $path): self;
-
     /** @return list<string> */
-    public function getPath(): array;
+    public function getPaths(): array;
 
     /**
-     * @param array<int, string> $rules
-     */
-    public function setRules(array $rules): self;
-
-    /**
-     * @return list<class-string<Rule>>
+     * @return array<class-string<Rule>>
      */
     public function getRules(): array;
-
-    public function setApplication(ApplicationData $application): self;
 
     public function getApplication(): ?ApplicationData;
 

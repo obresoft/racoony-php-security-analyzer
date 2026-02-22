@@ -8,10 +8,10 @@ use FilesystemIterator;
 use LogicException;
 use Obresoft\Racoony\CodeScanner\ASTFileScannerFactory;
 use Obresoft\Racoony\Config\ApplicationData;
+use Obresoft\Racoony\DataFlow\ProjectDataFlowBuilderFactory;
 use Obresoft\Racoony\Insight\Insight;
 use Obresoft\Racoony\ScanRunner;
 use Obresoft\Racoony\Tests\Attributes\TestsRule;
-use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -51,7 +51,6 @@ abstract class AbstractTestCase extends TestCase
 
     /**
      * @param list<Insight> $expected
-     * @throws Exception
      */
     final public function runTest(
         string $sourceCode,
@@ -76,7 +75,12 @@ abstract class AbstractTestCase extends TestCase
         $scanner = ASTFileScannerFactory::create($sourceCodeProvider, $applicationData);
 
         $rules = [$this->getTestedRuleClass()];
-        $vulnerabilities = (new ScanRunner($fileInfoListForRunner, $scanner, $rules))->run();
+        $vulnerabilities = (new ScanRunner(
+            $fileInfoListForRunner,
+            $scanner,
+            $rules,
+            ProjectDataFlowBuilderFactory::create($sourceCodeProvider),
+        ))->run();
 
         $actualVulnerabilities = array_values(array_filter(
             $vulnerabilities,

@@ -42,12 +42,20 @@ final class SpatieQueryBuilderSqlInjectionRule extends AbstractRule implements R
 
     /** @var string[] */
     private const array SUSPICIOUS_RAW_METHODS = [
-        'selectraw', 'addselectraw',
-        'whereraw', 'orwhereraw',
-        'havingraw', 'orhavingraw',
-        'orderbyraw', 'groupbyraw',
-        'joinraw', 'leftjoinraw', 'rightjoinraw', 'crossjoinraw',
-        'fromraw', 'unionraw',
+        'selectraw',
+        'addselectraw',
+        'whereraw',
+        'orwhereraw',
+        'havingraw',
+        'orhavingraw',
+        'orderbyraw',
+        'groupbyraw',
+        'joinraw',
+        'leftjoinraw',
+        'rightjoinraw',
+        'crossjoinraw',
+        'fromraw',
+        'unionraw',
     ];
 
     /** @var string[] */
@@ -119,11 +127,6 @@ final class SpatieQueryBuilderSqlInjectionRule extends AbstractRule implements R
         return [] === $vulnerabilities ? null : $vulnerabilities;
     }
 
-    private function normalizeToRootVariableIfPossible(Scope $argumentScope): Scope
-    {
-        return $argumentScope;
-    }
-
     /**
      * @return array<int, Insight>
      */
@@ -153,8 +156,6 @@ final class SpatieQueryBuilderSqlInjectionRule extends AbstractRule implements R
             if (null === $firstArgScope) {
                 continue;
             }
-
-            $firstArgScope = $this->normalizeToRootVariableIfPossible($firstArgScope);
 
             if ($inputAnalyzer->withScope($firstArgScope)->isUserControlledInput()
                 || $laravelRequestAnalyzer->withScope($firstArgScope)->isRequestMethodCall()

@@ -49,6 +49,7 @@ final class LaravelOpenRedirectRule extends AbstractRule implements Rule
 
         foreach ($scope->callAnalyzer()->argScopes() as $argScope) {
             $laravelRequestCallAnalyzer = new LaravelRequestCallAnalyzer($argScope, $this->nameResolver);
+
             if ($laravelRequestCallAnalyzer->isRequestMethodCall()) {
                 return $this->report($scope->getLine());
             }

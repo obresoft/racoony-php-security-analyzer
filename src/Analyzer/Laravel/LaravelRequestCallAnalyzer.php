@@ -27,7 +27,11 @@ final class LaravelRequestCallAnalyzer extends BaseAnalyzer implements AnalyzerI
     private const int MAX_VALIDATION_RECURSION_DEPTH = 8;
 
     /** @var list<string> */
-    private const array REQUEST_CLASSES = ['Illuminate\Http\Request', 'Illuminate\Foundation\Http\FormRequest', 'Illuminate\Support\Facades\Request'];
+    private const array REQUEST_CLASSES = [
+        'Illuminate\Http\Request',
+        'Illuminate\Foundation\Http\FormRequest',
+        'Illuminate\Support\Facades\Request',
+    ];
 
     /** @var list<string> */
     private const array REQUEST_METHODS = [
@@ -145,8 +149,7 @@ final class LaravelRequestCallAnalyzer extends BaseAnalyzer implements AnalyzerI
         if ($node instanceof ArrayDimFetch) {
             $baseExpr = $node->var;
 
-            return $this->withScope($this->scope->withNode($baseExpr))
-                ->isValidatedCall($depth + 1);
+            return $this->withScope($this->scope->withNode($baseExpr))->isValidatedCall($depth + 1);
         }
 
         // Case 2: Variable whose origin may be a validated-returning MethodCall
@@ -183,8 +186,7 @@ final class LaravelRequestCallAnalyzer extends BaseAnalyzer implements AnalyzerI
                 }
             }
 
-            return $this->withScope($this->scope->withNode($node->var))
-                ->isValidatedCall($depth + 1);
+            return $this->withScope($this->scope->withNode($node->var))->isValidatedCall($depth + 1);
         }
 
         return false;

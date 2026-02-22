@@ -4,9 +4,15 @@ declare(strict_types=1);
 
 namespace Obresoft\Racoony\DataFlow;
 
+use Obresoft\Racoony\Resolver\MetadataResolver;
+use Obresoft\Racoony\SourceCodeProvider;
+use Obresoft\Racoony\Support\AttributeExtractor;
 use PhpParser\ErrorHandler\Throwing;
 use PhpParser\Node;
+use PhpParser\Node\Expr\Array_;
+use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Class_;
+use PhpParser\Node\Stmt\Property;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
@@ -17,8 +23,14 @@ use function array_key_exists;
 use function is_array;
 use function is_string;
 
-final class ProjectDataFlowBuilder
+final readonly class ProjectDataFlowBuilder
 {
+    public function __construct(
+        private SourceCodeProvider $reader,
+        /** @var list<MetadataResolver> */
+        private array $frameworkResolvers = [],
+    ) {}
+
     /**
      * @param list<SplFileInfo> $files
      */
@@ -27,22 +39,24 @@ final class ProjectDataFlowBuilder
         $parser = (new ParserFactory())->createForVersion(PhpVersion::fromString('8.3'));
         $errorHandler = new Throwing();
         $index = new ProjectDataFlowIndex();
-
+        $traverser = new NodeTraverser();
         $raw = [];
 
         foreach ($files as $file) {
-            $code = @file_get_contents($file->getRealPath());
-            if (false === $code) {
+            $path = $file->getRealPath();
+
+            if (!is_string($path)) {
                 continue;
             }
 
+            $code = $this->reader->read($path);
             $stmts = $parser->parse($code, $errorHandler) ?? [];
 
-            $traverser = new NodeTraverser();
             $traverser->addVisitor(new NameResolver(null, [
                 'preserveOriginalNames' => true,
                 'replaceNodes' => false,
             ]));
+
             $resolved = $traverser->traverse($stmts);
 
             foreach ($this->yieldClassNodes($resolved) as $classNode) {
@@ -72,6 +86,9 @@ final class ProjectDataFlowBuilder
                     'parent' => $parent,
                     'interfaces' => $interfaces,
                     'own' => $own,
+                    'properties' => $this->extractClassProperties($classNode),
+                    'propertyDefaults' => $this->extractPropertyDefaults($classNode),
+                    'phpAttributes' => AttributeExtractor::extractFromClass($classNode),
                 ];
             }
         }
@@ -102,19 +119,30 @@ final class ProjectDataFlowBuilder
                 $parent = $raw[$parent]['parent'];
             }
 
-            $index->addClassData(new ClassDataDto(
+            $classData = new ClassDataDto(
                 class: $fqcn,
                 parentClass: $meta['parent'],
                 implementedInterfaces: $meta['interfaces'],
                 ownMethodNames: $meta['own'],
                 inheritedMethods: $inherited,
-            ));
+                properties: $meta['properties'],
+                classAttributes: $meta['phpAttributes'],
+            );
+
+            $index->addClassData($classData);
+
+            foreach ($this->frameworkResolvers as $frameworkResolver) {
+                $frameworkResolver->resolveAll($classData, $meta, $index);
+            }
         }
 
         return $index;
     }
 
-    /** @param array<Node> $stmts @return iterable<Class_> */
+    /**
+     * @param array<Node> $stmts
+     * @return iterable<Class_>
+     */
     private function yieldClassNodes(array $stmts): iterable
     {
         $stack = $stmts;
@@ -140,7 +168,10 @@ final class ProjectDataFlowBuilder
         }
     }
 
-    /** @param list<string> $values @return array<string,true> */
+    /**
+     * @param list<string> $values
+     * @return array<string,true>
+     */
     private function toSet(array $values): array
     {
         $set = [];
@@ -149,5 +180,85 @@ final class ProjectDataFlowBuilder
         }
 
         return $set;
+    }
+
+    private function extractClassProperties(Class_ $classNode): array
+    {
+        $attributes = [];
+
+        foreach ($classNode->stmts as $statement) {
+            if (!$statement instanceof Property) {
+                continue;
+            }
+
+            foreach ($statement->props as $propertyProperty) {
+                $default = $propertyProperty->default;
+
+                if ($default instanceof String_) {
+                    $attributes[$propertyProperty->name->toString()] = $default->value;
+
+                    continue;
+                }
+
+                if (!$default instanceof Array_) {
+                    continue;
+                }
+
+                if ([] === $default->items) {
+                    $attributes[$propertyProperty->name->toString()] = [];
+
+                    continue;
+                }
+
+                $values = [];
+
+                foreach ($default->items as $item) {
+                    if (null === $item) {
+                        continue;
+                    }
+
+                    if (!$item->value instanceof String_) {
+                        continue;
+                    }
+
+                    $values[] = $item->value->value;
+                }
+
+                if ([] === $values) {
+                    continue;
+                }
+
+                $attributes[$propertyProperty->name->toString()] = $values;
+            }
+        }
+
+        return $attributes;
+    }
+
+    private function extractPropertyDefaults(Class_ $classNode): array
+    {
+        $defaults = [];
+
+        foreach ($classNode->stmts as $statement) {
+            if (!$statement instanceof Property) {
+                continue;
+            }
+
+            foreach ($statement->props as $property) {
+                $name = $property->name->toString();
+                $valueNode = $property->default;
+
+                if ($valueNode instanceof String_) {
+                    $defaults[$name] = $valueNode->value;
+                } elseif ($valueNode instanceof Array_) {
+                    $defaults[$name] = array_map(
+                        static fn ($item) => $item->value instanceof String_ ? $item->value->value : null,
+                        $valueNode->items,
+                    );
+                }
+            }
+        }
+
+        return $defaults;
     }
 }
