@@ -6,30 +6,37 @@ namespace Obresoft\Racoony\Resolver\Laravel;
 
 use Doctrine\Inflector\InflectorFactory;
 use Obresoft\Racoony\DataFlow\ClassDataDto;
-use Obresoft\Racoony\Resolver\TableNameResolver;
+use Obresoft\Racoony\DataFlow\ProjectDataFlowIndex;
+use Obresoft\Racoony\Resolver\FrameworkDataResolver;
 
 use function in_array;
 use function is_string;
 
-final class LaravelEloquentTableResolver implements TableNameResolver
+final class LaravelEloquentTableResolver implements FrameworkDataResolver
 {
-    public function resolve(ClassDataDto $classDataDto, array $meta): ?string
+    public function resolve(ClassDataDto $classDataDto, array $meta, ProjectDataFlowIndex $projectDataFlowIndex): void
     {
         $propertyDefaults = $classDataDto->properties ?? [];
 
         $isEloquentModel = $this->isEloquentModel($classDataDto);
 
         if (!$isEloquentModel) {
-            return null;
+            return;
         }
 
         $tablePropertyValue = $propertyDefaults['table'] ?? null;
 
         if (is_string($tablePropertyValue) && '' !== $tablePropertyValue) {
-            return $tablePropertyValue;
+            $projectDataFlowIndex->associateTableWithClass($tablePropertyValue, $classDataDto->class);
+
+            return;
         }
 
-        return $this->inferTableNameFromClass($classDataDto->class);
+        $tableName = $this->inferTableNameFromClass($classDataDto->class);
+
+        if ('' !== $tableName) {
+            $projectDataFlowIndex->associateTableWithClass($tableName, $classDataDto->class);
+        }
     }
 
     private function isEloquentModel(ClassDataDto $dto): bool

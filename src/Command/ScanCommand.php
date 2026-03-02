@@ -5,13 +5,10 @@ declare(strict_types=1);
 namespace Obresoft\Racoony\Command;
 
 use ArrayIterator;
-use Obresoft\Racoony\CodeScanner\ASTFileScannerFactory;
-use Obresoft\Racoony\Command\Reporting\JsonReport;
+use Obresoft\Racoony\CodeScanner\ASTFileScanner;
 use Obresoft\Racoony\Command\Reporting\ReportBuilder;
-use Obresoft\Racoony\Command\Reporting\TableReport;
 use Obresoft\Racoony\Config\Config;
-use Obresoft\Racoony\DataFlow\ProjectDataFlowBuilderFactory;
-use Obresoft\Racoony\FileReader;
+use Obresoft\Racoony\DataFlow\ProjectDataFlowBuilder;
 use Obresoft\Racoony\ScanRunner;
 use SplFileInfo;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -31,16 +28,13 @@ final class ScanCommand extends Command
 {
     private const string NAME = 'scan';
 
-    private readonly ReportBuilder $reportBuilder;
-
-    public function __construct(private readonly Config $config)
-    {
+    public function __construct(
+        private readonly Config $config,
+        private readonly ReportBuilder $reportBuilder,
+        private readonly ASTFileScanner $scanner,
+        private readonly ProjectDataFlowBuilder $dataFlowBuilder,
+    ) {
         parent::__construct(self::NAME);
-        $this->reportBuilder = new ReportBuilder([
-            'table' => new TableReport(),
-            'json' => new JsonReport(),
-            // 'sarif' => new SarifReport(),
-        ]);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -58,10 +52,6 @@ final class ScanCommand extends Command
             )
             ->files()
             ->name('*.php');
-
-        $scanner = ASTFileScannerFactory::create(new FileReader(), $this->config->getApplication());
-
-        $builder = ProjectDataFlowBuilderFactory::create(new FileReader());
 
         $filesArray = iterator_to_array($finder);
         $files = new ArrayIterator($filesArray);
@@ -93,9 +83,9 @@ final class ScanCommand extends Command
         try {
             $insights = (new ScanRunner(
                 $files,
-                $scanner,
+                $this->scanner,
                 $this->config->getRules(),
-                $builder,
+                $this->dataFlowBuilder,
                 $onFileScanned,
             ))->run();
         } finally {
@@ -111,26 +101,19 @@ final class ScanCommand extends Command
             return Command::SUCCESS;
         }
 
-        $output->writeln('');
-        $output->writeln('<bg=red;fg=white> ⚠ Vulnerabilities Found </>');
-        $output->writeln('');
+        $output->writeln(['', '<bg=red;fg=white> ⚠ Vulnerabilities Found </>', '']);
 
         $needToFail = false;
-
         foreach ($insights as $insight) {
             if (!$needToFail) {
                 $needToFail = $this->config->getFailOn()->isAtLeast($insight->getSeverity());
             }
         }
 
-        $reportFormat = (string)$input->getOption('format');
+        $this->reportBuilder->build($reportFormat)->render($insights, $output);
 
-        $report = $this->reportBuilder->build($reportFormat);
-        $report->render($insights, $output);
-
-        $output->writeln('');
         $output->writeln(sprintf(
-            '<bg=yellow;fg=black> %d potential issue(s) found. </>',
+            "\n<bg=yellow;fg=black> %d potential issue(s) found. </>\n",
             count($insights),
         ));
 
@@ -145,7 +128,7 @@ final class ScanCommand extends Command
                 'format',
                 null,
                 InputOption::VALUE_REQUIRED,
-                'Output format (table, json, sarif)',
+                'Output format (table, json)',
                 'table',
             );
     }

@@ -25,7 +25,8 @@
     },
     "autoload-dev": {
       "psr-4": {
-        "Obresoft\\Racoony\\Tests\\": "tests/"
+        "Obresoft\\Racoony\\Tests\\": "tests/",
+        "App\\": "tests/Stubs/laravel/app"
       }
     },
     "bin": [
@@ -47,7 +48,9 @@
         "ext-pdo": "*",
         "ramsey/collection": "^2.1",
         "ext-zip": "*",
-        "doctrine/inflector": "^2.1"
+        "doctrine/inflector": "^2.1",
+        "symfony/dependency-injection": "^8.0",
+        "symfony/config": "^8.0"
     },
     "require-dev": {
         "rector/rector": "^2.0",
