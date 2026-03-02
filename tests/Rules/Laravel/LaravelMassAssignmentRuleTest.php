@@ -51,7 +51,7 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
                     {
                         $validatedData = $request->validate([
                             'title' => 'required|string',
-                            'path'  => 'required|string',
+                            'path' => 'required|string',
                         ]);
 
                         Photo::where('id', 1)->update($validatedData);
@@ -227,7 +227,7 @@ final class LaravelMassAssignmentRuleTest extends AbstractTestCase implements La
                     {
                         $validated = $request->validate([
                             'title' => 'required|string',
-                            'path'  => 'required|string',
+                            'path' => 'required|string',
                         ]);
 
                         $dto = PhotoDto::fromValidatedArray($validated);

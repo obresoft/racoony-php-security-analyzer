@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Obresoft\Racoony\Support;
 
-final class SelectorHelper
+final class Selector
 {
     public static function containsWildcardSelection(array $selectedColumnNames): bool
     {

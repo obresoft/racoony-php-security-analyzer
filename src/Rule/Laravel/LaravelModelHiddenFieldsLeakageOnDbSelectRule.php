@@ -15,7 +15,7 @@ use Obresoft\Racoony\Insight\Insight;
 use Obresoft\Racoony\Resolver\SqlTableNameAndAliasResolver;
 use Obresoft\Racoony\Rule\AbstractRule;
 use Obresoft\Racoony\Rule\Rule;
-use Obresoft\Racoony\Support\SelectorHelper;
+use Obresoft\Racoony\Support\Selector;
 
 use function in_array;
 use function is_string;
@@ -84,7 +84,7 @@ final class LaravelModelHiddenFieldsLeakageOnDbSelectRule extends AbstractRule i
         }
 
         // If select contains '*' or 'alias.*' we must assume hidden fields are included.
-        if (SelectorHelper::containsWildcardSelection($selectedColumnNames)) {
+        if (Selector::containsWildcardSelection($selectedColumnNames)) {
             return $this->report($selectScope->getLine(), $hiddenAttributeNames, $resolvedTable->tableName);
         }
 
@@ -191,6 +191,7 @@ final class LaravelModelHiddenFieldsLeakageOnDbSelectRule extends AbstractRule i
     private function normalizeSelectedColumnName(string $selectedColumnName): ?string
     {
         $value = trim($selectedColumnName);
+
         if ('' === $value) {
             return null;
         }
@@ -222,7 +223,6 @@ final class LaravelModelHiddenFieldsLeakageOnDbSelectRule extends AbstractRule i
         if ([] !== $fromAttribute) {
             return $fromAttribute;
         }
-
 
         return array_values(array_filter(
             $classData->properties['hidden'] ?? [],

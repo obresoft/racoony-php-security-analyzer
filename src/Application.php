@@ -6,10 +6,10 @@ namespace Obresoft\Racoony;
 
 use Obresoft\Racoony\Command\ScanCommand;
 use Obresoft\Racoony\Command\ScanPackageCommand;
-use Obresoft\Racoony\Config\Config;
-use Obresoft\Racoony\Config\ConfigurationResolver;
-use Obresoft\Racoony\Infrastructure\Downloader\GitHub\GitHubZipDownloader;
+use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Console\Application as BaseApplication;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 
 final class Application extends BaseApplication
 {
@@ -17,15 +17,16 @@ final class Application extends BaseApplication
 
     public const string VERSION = '0.0.0';
 
-    private readonly Config $config;
-
     public function __construct()
     {
         parent::__construct(self::NAME, self::VERSION);
 
-        $configResolver = new ConfigurationResolver();
-        $this->config = $configResolver->getConfig();
-        $this->addCommand(new ScanCommand($this->config));
-        $this->addCommand(new ScanPackageCommand(new GitHubZipDownloader()));
+        $container = new ContainerBuilder();
+        $loader = new PhpFileLoader($container, new FileLocator(__DIR__ . '/../config'));
+        $loader->load('services.php');
+        $container->compile();
+
+        $this->addCommand($container->get(ScanCommand::class));
+        $this->addCommand($container->get(ScanPackageCommand::class));
     }
 }

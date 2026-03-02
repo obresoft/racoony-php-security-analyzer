@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Obresoft\Racoony\Command;
 
-use Obresoft\Racoony\Config\RacoonyConfig;
 use Obresoft\Racoony\Infrastructure\Downloader\ZipDownloader;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -21,6 +20,7 @@ final class ScanPackageCommand extends Command
 {
     public function __construct(
         private readonly ZipDownloader $zipDownloader,
+        private readonly Filesystem $filesystem,
     ) {
         parent::__construct();
     }
@@ -46,18 +46,21 @@ final class ScanPackageCommand extends Command
             return Command::FAILURE;
         }
 
+        $output->writeln("<info>Downloading repository: {$repoUrl}...</info>");
         $tempDir = $this->zipDownloader->download($repoUrl);
 
-        $customConfig = (new RacoonyConfig())
-            ->setPath($tempDir)
-            ->setRules(['*']);
-
         try {
-            $scanCommand = new ScanCommand($customConfig);
+            $command = $this->getApplication()?->find('scan');
 
-            return $scanCommand->run(new ArrayInput([]), $output);
+            if (!$command) {
+                $output->writeln('<error>Command "scan" not found.</error>');
+
+                return Command::FAILURE;
+            }
+
+            return $command->run(new ArrayInput([]), $output);
         } finally {
-            (new Filesystem())->remove($tempDir);
+            $this->filesystem->remove($tempDir);
         }
     }
 }

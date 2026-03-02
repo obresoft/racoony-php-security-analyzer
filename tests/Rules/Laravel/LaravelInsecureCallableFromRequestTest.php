@@ -50,7 +50,7 @@ final class LaravelInsecureCallableFromRequestTest extends AbstractTestCase
                 {
                     public function run(Request $r)
                     {
-                        $fn = $r->input('do'); // e.g. 'phpinfo' / 'App\\Svc::dumpSecrets'
+                        $fn = $r->input('do');
                         return $fn();
                     }
                 }
@@ -174,7 +174,7 @@ final class LaravelInsecureCallableFromRequestTest extends AbstractTestCase
                         $action = (string) $r->input('action');
                         $allowed = [
                             'stats' => [\App\Services\Reports::class, 'stats'],
-                            'ping'  => fn() => 'pong',
+                            'ping' => fn() => 'pong',
                         ];
 
                         if (!\array_key_exists($action, $allowed)) {

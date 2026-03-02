@@ -10,7 +10,7 @@ use Obresoft\Racoony\Analyzer\Scope;
 use Obresoft\Racoony\DataFlow\ClassDataDto;
 use Obresoft\Racoony\DataFlow\ProjectDataFlowIndex;
 use Obresoft\Racoony\Resolver\ClassNameResolver;
-use Obresoft\Racoony\Support\SelectorHelper;
+use Obresoft\Racoony\Support\Selector;
 use PhpParser\Node\Stmt\Class_;
 use RuntimeException;
 
@@ -124,14 +124,14 @@ final class LaravelModelAnalyzer extends BaseAnalyzer implements AnalyzerInterfa
             return true;
         }
 
-        return is_array($fillable) && !SelectorHelper::containsWildcardSelection($fillable);
+        return is_array($fillable) && !Selector::containsWildcardSelection($fillable);
     }
 
     public function fillableHasWildcardSelection(): bool
     {
         $fillable = $this->getPropertyValue('fillable');
 
-        return is_array($fillable) && SelectorHelper::containsWildcardSelection($fillable);
+        return is_array($fillable) && Selector::containsWildcardSelection($fillable);
     }
 
     public function isModelClass(): bool

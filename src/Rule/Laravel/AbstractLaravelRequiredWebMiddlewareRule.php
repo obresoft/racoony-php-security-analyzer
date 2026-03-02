@@ -17,10 +17,6 @@ use PhpParser\Node\Stmt\Class_;
 use function in_array;
 use function is_array;
 
-/**
- * Base rule for "required middleware must appear in the 'web' group".
- * Subclasses define the target middleware, CWE, and message.
- */
 abstract class AbstractLaravelRequiredWebMiddlewareRule extends AbstractRule implements Rule
 {
     final public function check(AnalysisContext $context): ?Insight
@@ -44,55 +40,26 @@ abstract class AbstractLaravelRequiredWebMiddlewareRule extends AbstractRule imp
 
     abstract protected function message(): string;
 
-    /**
-     * @return array<int, ClassConstFetch|string>
-     */
     protected function extractValuesRecursively(mixed $value): array
     {
         $out = [];
 
-        $add = static function (ClassConstFetch $c) use (&$out): void {
-            $ref = (string)$c->class;
-            if (!in_array($ref, $out, true)) {
-                $out[] = $ref;
-            }
-        };
+        array_walk_recursive($value, static function ($item) use (&$out): void {
+            $node = null;
 
-        $visit = static function (mixed $v) use (&$visit, $add): void {
-            if ($v instanceof ClassConstFetch) {
-                $add($v);
-
-                return;
+            if ($item instanceof ClassConstFetch) {
+                $node = $item;
+            } elseif (is_array($item) && ($item['node'] ?? null) instanceof ClassConstFetch) {
+                $node = $item['node'];
             }
 
-            if (!is_array($v)) {
-                return;
-            }
-
-            if (isset($v['type'], $v['value'])) {
-                if ('complex_expression' === $v['type'] && ($v['node'] ?? null) instanceof ClassConstFetch) {
-                    $add($v['node']);
-
-                    return;
+            if ($node) {
+                $ref = (string)$node->class;
+                if (!in_array($ref, $out, true)) {
+                    $out[] = $ref;
                 }
-
-                if ('array' === $v['type']) {
-                    foreach ($v['value'] as $item) {
-                        $visit($item);
-                    }
-
-                    return;
-                }
-
-                return;
             }
-
-            foreach ($v as $nested) {
-                $visit($nested);
-            }
-        };
-
-        $visit($value);
+        });
 
         return $out;
     }
@@ -102,9 +69,9 @@ abstract class AbstractLaravelRequiredWebMiddlewareRule extends AbstractRule imp
         /** @var Class_ $node */
         $node = $context->scope->node();
         $classAnalyzer = new ClassAnalyzer();
-        $classData = $classAnalyzer->analyzeClass($node);
         $classNameResolver = new ClassNameResolver($context->scope->getNodes());
 
+        $classData = $classAnalyzer->analyzeClass($node);
         if ('Illuminate\Foundation\Http\Kernel' !== $classNameResolver->resolveClassName($classData['extends'])) {
             return null;
         }
@@ -115,26 +82,18 @@ abstract class AbstractLaravelRequiredWebMiddlewareRule extends AbstractRule imp
             }
 
             $values = $this->extractValuesRecursively($property['value']);
+            $required = $this->requiredMiddleware();
 
-            $found = false;
             foreach ($values as $value) {
-                $resolvedClass = $classNameResolver->resolveClassName($value);
-                $classData = $context->projectDataFlowIndex->getClassData($resolvedClass);
+                $resolved = $classNameResolver->resolveClassName($value);
+                $targetData = $context->projectDataFlowIndex->getClassData($resolved);
 
-                if ($classData?->parentClass === $this->requiredMiddleware()) {
-                    $found = true;
-
-                    break;
-                }
-
-                if ($this->requiredMiddleware() === $resolvedClass) {
-                    $found = true;
-
-                    break;
+                if ($resolved === $required || ($targetData?->parentClass === $required)) {
+                    return null;
                 }
             }
 
-            return $found ? null : $this->reportMissing($property['line']);
+            return $this->reportMissing($property['line']);
         }
 
         return null;
