@@ -15,7 +15,7 @@ final class Application extends BaseApplication
 {
     public const string NAME = 'Racoony';
 
-    public const string VERSION = '0.0.0';
+    public const string VERSION = '0.1.0';
 
     public function __construct()
     {
