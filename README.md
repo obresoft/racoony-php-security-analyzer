@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://packagist.org/packages/obresoft/racoony">
-     <img src="https://img.shields.io/badge/version-0.0.0-blue?style=flat-square" alt="Project Version">
+     <img src="https://img.shields.io/badge/version-0.1.0-blue?style=flat-square" alt="Project Version">
   </a>
   <a href="https://www.php.net/releases/8.3/en.php">
     <img src="https://img.shields.io/badge/php-%5E8.3-blue?style=flat-square" alt="PHP Version">
@@ -36,7 +36,7 @@ Racoony identifies risky constructs, insecure configurations, and misuses of fra
 
 - Racoony is currently **in active development** (pre-release stage).  
 - We welcome **feedback, bug reports, and contributions** from the community to help shape the tool.
-- **Current Version (initial preview):** `0.0.0`
+- **Current Version (initial preview):** `0.1.0`
 
 ---
 
@@ -113,6 +113,7 @@ Minimum PHP version: 8.3
 
 ## ▶️ Usage
 Run from project root (where .racoony-config.php is located):
+
 ./vendor/bin/racoony scan
 
 
