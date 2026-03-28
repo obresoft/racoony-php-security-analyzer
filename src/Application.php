@@ -26,7 +26,7 @@ final class Application extends BaseApplication
         $loader->load('services.php');
         $container->compile();
 
-        $this->addCommand($container->get(ScanCommand::class));
-        $this->addCommand($container->get(ScanPackageCommand::class));
+        $this->add($container->get(ScanCommand::class));
+        $this->add($container->get(ScanPackageCommand::class));
     }
 }
