@@ -40,17 +40,17 @@
     ],
     "require": {
         "php": "^8.3",
-        "symfony/console": "^7.4",
-        "symfony/filesystem": "^7.4",
-        "symfony/finder": "^7.4",
+        "symfony/console": "^6.4 || ^7.0",
+        "symfony/filesystem": "^6.4 || ^7.0",
+        "symfony/finder": "^6.4 || ^7.0",
         "webmozart/assert": "^1.11",
         "nikic/php-parser": "^5.4",
         "ext-pdo": "*",
         "ramsey/collection": "^2.1",
         "ext-zip": "*",
         "doctrine/inflector": "^2.1",
-        "symfony/dependency-injection": "^7.4",
-        "symfony/config": "^7.4"
+        "symfony/dependency-injection": "^6.4 || ^7.0",
+        "symfony/config": "^6.4 || ^7.0"
     },
     "require-dev": {
         "rector/rector": "^2.0",
