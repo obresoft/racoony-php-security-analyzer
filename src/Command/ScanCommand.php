@@ -51,7 +51,8 @@ final class ScanCommand extends Command
                 ['vendor', 'tests', 'database', 'storage', 'cache', 'samples', 'docs', 'node_modules', '.git', '.svn'],
             )
             ->files()
-            ->name('*.php');
+            ->name('*.php')
+            ->notName('*.blade.php');;
 
         $filesArray = iterator_to_array($finder);
         $files = new ArrayIterator($filesArray);
