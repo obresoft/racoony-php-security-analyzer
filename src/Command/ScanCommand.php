@@ -52,7 +52,7 @@ final class ScanCommand extends Command
             )
             ->files()
             ->name('*.php')
-            ->notName('*.blade.php');;
+            ->notName('*.blade.php');
 
         $filesArray = iterator_to_array($finder);
         $files = new ArrayIterator($filesArray);

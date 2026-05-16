@@ -3,3 +3,4 @@
 /.idea/
 xdebug.log
 .phpunit.result.cache
+composer.lock
